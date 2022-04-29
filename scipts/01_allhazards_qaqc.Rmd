@@ -1,0 +1,331 @@
+---
+title: "AllHazards_2022PreRelease_QAQC"
+author: "kj"
+date: "Started 4/25/2022"
+output: pdf_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+
+##WANT TO RESET THE WORKING DIRECTORY TO WHERE YOU STORE THE 2 CSVS TO READ IN
+#CSV can be retrieved from FC shared google drive in data\allhazards folders
+knitr::opts_knit$set(root.dir = 'C:\\Users\\thebrain\\Dropbox\\FireChasers\\ICA_repo\\ICA')
+
+#load libraries
+library(tidyverse) #generally things that involves %>% operators
+library(data.table)
+```
+
+**## Reading in Data to Identify Our Sample for ICA**
+
+```{r, cache=TRUE}
+incidents<-read.csv("data\\ics209-plus-wf_incidents_1999to2020.csv")
+sitreps<-read.csv("data\\ics209-plus-wf_sitreps_1999to2020.csv")
+```
+
+
+# Basic Stats about the Data
+**## How many records are in each dataset?**
+
+```{r}
+inc_rows<-length(unique(incidents$INCIDENT_ID))
+sit_rows<-length(unique(sitreps$INCIDENT_ID))
+```
+
+St. Denis Unique Incident_IDs: `r toString(inc_rows)`
+SitReps Incident_IDs: `r toString(sit_rows)`
+
+**## Of these records, how many are either wildfires or wildfire use?**
+```{r}
+#check fire use types - we only care about wildfires
+unique(incidents$INCTYP_ABBREVIATION)
+#get just the wildfires
+wf_inc<-incidents[incidents$INCTYP_ABBREVIATION %in% c("WF","WFU"),]
+#see how it reduces dataset 
+num_wf_inc<-length(unique(wf_inc$INCIDENT_ID))
+
+```
+
+There are `r num_wf_inc` wildfire incidents.
+
+**## Now we want to know how many of those incidents are Type 1, Type 2, or NIMO to determine our sample size for ICA.**
+```{r}
+#smush the incident IDs and sitreps together
+wf_inc_sitrep<-merge(wf_inc,sitreps,by="INCIDENT_ID")
+
+#how is type1/2 designated
+unique(wf_inc_sitrep$IMT_MGMT_ORG_DESC)
+
+#make list of incident_ids that have type 1/2/NIMO designations
+type12_incid_nimo<-wf_inc_sitrep$INCIDENT_ID[wf_inc_sitrep$IMT_MGMT_ORG_DESC %in% c("Type 2 Team","Type 1 Team","Type 2 IC","Type 1 IC","NIMO")] 
+
+#baseline for sample size
+type12_wf_inc_nimo<-wf_inc[wf_inc$INCIDENT_ID %in% type12_incid_nimo,]
+num_type12nimo<-length(unique(type12_wf_inc_nimo$INCIDENT_ID))
+
+#also want to check which of these fires have year data, cause it will reduce our sample if we can't assigna fire to a given year
+range(type12_wf_inc_nimo$START_YEAR)
+#range indicates there are no NAs for START_YEAR
+
+write.csv(type12_wf_inc_nimo,"oursample.csv")
+
+```
+
+There are `r num_type12nimo`. This our sample from 1999-2020.
+
+*"oursample.csv" spit out into working directory*
+
+**## How many incidents per year for our Type 1/2/NIMO wildfires from 1999-2020?**
+
+```{r}
+#count the number of incidents per year
+inc_peryear<- type12_wf_inc_nimo %>% group_by(START_YEAR) %>% tally()
+
+#plotting incidents by count per year
+ggplot(inc_peryear, aes(x = START_YEAR , y= n)) +
+  geom_bar(position="dodge", stat = "identity") + ggtitle("Count of Wildfire, Type1/2/NIMO Incidents per Year")
+
+```
+
+**## How many of these yearly incidents are complexes?**
+
+```{r}
+#count complexes per year
+inc_peryear_comp<- type12_wf_inc_nimo %>% group_by(START_YEAR,COMPLEX) %>% tally()
+
+#complex vs. not
+ggplot(inc_peryear_comp, aes(x = START_YEAR , y= n, fill=COMPLEX)) +
+  geom_bar( stat = "identity")+ ggtitle("Count of Complexes vs. Single Incidents per Year")
+
+```
+
+
+**\textcolor{red}{1. INVESTIGATE WHY NO COMPLEXES IN LATER YEARS (look in the ics209-plus-wf_incidents_1999to2020.csv)}**
+
+
+
+# Checking fire size (in acres) 
+
+```{r}
+# find the quartiles of fire size
+
+min<-min(type12_wf_inc_nimo$FINAL_ACRES)
+howmanyzero<-nrow(type12_wf_inc_nimo[type12_wf_inc_nimo$FINAL_ACRES==0,])
+max<-max(type12_wf_inc_nimo$FINAL_ACRES)
+mean<-mean(type12_wf_inc_nimo$FINAL_ACRES)
+perc25<-quantile(type12_wf_inc_nimo$FINAL_ACRES)[2]
+perc75<-quantile(type12_wf_inc_nimo$FINAL_ACRES)[3]
+
+over50000<-nrow(type12_wf_inc_nimo[type12_wf_inc_nimo$FINAL_ACRES>50000,])
+
+hist(type12_wf_inc_nimo$FINAL_ACRES,breaks=10000,xlim=c(50,50000),ylab = "Count",xlab="Fire Size (acres)", main ="Count of Incidents by Size")
+```
+
+There are `r over50000` incidents over 50,000 acres not represented in the histogram.
+The minimum fire size is `r min` acres. (There are `r howmanyzero` incidents recorded as 0 acres.)
+THe maximum fire size is `r max` acres.
+
+The 1st quartile is made up of fires under `r perc25`, the average fire is `r mean` acres, the 3rd quartile represents fires up to `r perc75` acres.
+
+**\textcolor{red}{2. INVESTIGATE 0 ACRE FIRES}**
+
+# Look at cumulative acres through the years
+## See if we see previously (by others) identified acreage trends through time?
+```{r}
+
+acres_peryear<- type12_wf_inc_nimo %>% group_by(START_YEAR) %>% summarize(sum=sum(FINAL_ACRES))
+
+ggplot(acres_peryear, aes(x = START_YEAR , y= sum)) +
+  geom_bar( stat = "identity")+ ggtitle("Total Acres Burned per Year")+
+  xlab("year")+ ylab("Acres Burned")+ scale_y_continuous(labels = scales::comma)
+```
+
+**\textcolor{red}{2a. 2019 seems REALLLLY LOW? Check with other plots out on the internet?}**
+
+*Based on some reading on fires in Alaska, there's a lot of acreage that gets burned but they can go unsuppressed or at least without Type1/2 teams, so maybe we'd miss some acres that way?
+
+# Checking length of incidents 
+*Using Containment_DOY & DISCOVERY_DOY
+
+```{r}
+
+#want to remove fires with containment NA
+nrow(type12_wf_inc_nimo[is.na(type12_wf_inc_nimo$FOD_CONTAIN_DOY),])
+#want to remove fires with discvoery NA
+nrow(type12_wf_inc_nimo[is.na(type12_wf_inc_nimo$FOD_DISCOVERY_DOY),])
+#only look at fires that don't have nas for cont. & disc. DOY data
+no_doy_na<-type12_wf_inc_nimo[!is.na(type12_wf_inc_nimo$FOD_DISCOVERY_DOY) & !is.na(type12_wf_inc_nimo$FOD_CONTAIN_DOY),]
+
+
+#create length of fire variable in days
+no_doy_na$LNGTH_FIRE_DAYS<-no_doy_na$FOD_CONTAIN_DOY - no_doy_na$FOD_DISCOVERY_DOY
+
+#checkig how many fires we have whereh containment DOY is less than DISCOVERY_DOY
+nrow(no_doy_na[no_doy_na$LNGTH_FIRE_DAYS<0,])
+#need to to this step where containmen date occurs in the next year, so we want to correct the fire length
+no_doy_na$LNGTH_FIRE_DAYS[no_doy_na$FOD_CONTAIN_DOY < no_doy_na$FOD_DISCOVERY_DOY ] <-  no_doy_na$LNGTH_FIRE_DAYS[no_doy_na$FOD_CONTAIN_DOY < no_doy_na$FOD_DISCOVERY_DOY ] +365
+
+#after correction, should have no incidents with negative fire lengths in days
+nrow(no_doy_na[no_doy_na$LNGTH_FIRE_DAYS<0,])
+
+under10<-nrow(no_doy_na[no_doy_na$LNGTH_FIRE_DAYS<10,])
+under5<-nrow(no_doy_na[no_doy_na$LNGTH_FIRE_DAYS<5,])
+
+hist(no_doy_na$LNGTH_FIRE_DAYS,breaks=365,main="Count of Incidents by Fire Length In Days",xlab="Length of Incident (days)",ylab="Count of Incidents")
+
+write.csv(no_doy_na,"check_this_for_incident_lengthindays.csv")
+
+
+```
+
+Of note,`r under10` (of the fires with DOY data) of `r num_type12nimo` last less than 10 days. `r under5` fires last less than 5 days. This may be expected with high suppression Typ1/2 operations, just thought it was worth noting.
+
+**\textcolor{red}{3. INVESTIGATE THE FIRES THAT HAVE REALLY LONG AND SHORT LENGTHS}**
+**The csv "check_this_for_incident_lengthindays.csv" will be written out in the same folder that  you run this code.**
+
+# Looking at FOD number of fires associated to each incident
+```{r}
+#get the minimum & maximum number of FOD fires associated to an INCIDENT
+max_num<-max(type12_wf_inc_nimo$FOD_FIRE_NUM,na.rm=TRUE)
+min_num<-min(type12_wf_inc_nimo$FOD_FIRE_NUM,na.rm=TRUE)
+
+#how many incidents aren't in FOD database AND/OR don't have data recorded in database?
+howmany_nas<-length(type12_wf_inc_nimo$FOD_FIRE_NUM[is.na(type12_wf_inc_nimo$FOD_FIRE_NUM)])
+
+hist(type12_wf_inc_nimo$FOD_FIRE_NUM,breaks=25,main="Count of Incidents by the Number of FOD Fires Associated", ylab="Number of Incidents",xlab="Number of FOD Fires Linked to Incident")
+```
+*The highest number of FOD fires associated is `r max_num`. This seems high, want to investigate this record. Or really, any incident with an FOD_FIRE_NUM greater than 10?
+
+There are `r howmany_nas` incidents with no FOD_FIRES associated (where the FOD_FIRE_NUM columns is NA). Want to take a look at these fires, I think. Would be good to know just how many of our sample for ICA might not link to FOD database. This COULD be explained by the incidents from 2018-2020 not being linked to FOD yet. 
+
+**\textcolor{red}{4. INVESTIGATE INCIDENTS THAT SHOW *NA* FOR "FOD_FIRE_NUM" & INCIDENTS THAT HAVE GREATER THAN 10 FOR "FOD_FIRE_NUM". ALSO, MAKE SURE THAT NON-COMPLEX INCIDENTS ONLY HAVE AN "FOD_FIRE_NUM" OF 1.}**
+
+# Structures Damaged
+**## Now, we want to look at the structures *damaged* data just to get an idea if the changes in recording through time appear in our data. Can do a deeper dive later.**
+```{r}
+#start by plotting all structures damaged histograms
+hist(type12_wf_inc_nimo$STR_DAMAGED_COMM_TOTAL,breaks=1000,xlim=c(0,20),xlab="Number of Commercial Structures Damaged",ylab="Count of Incidents",main="Counting Incidents by Commercial Structures Damaged")
+hist(type12_wf_inc_nimo$STR_DAMAGED_RES_TOTAL,breaks=1000,xlim=c(0,100),xlab="Number of Residential Structures Damaged",ylab="Count of Incidents",main="Counting Incidents by Residential Structures Damaged")
+hist(type12_wf_inc_nimo$STR_DAMAGED_TOTAL,breaks=1000,xlim=c(0,500),xlab="Number of Total Structures Damaged",ylab="Count of Incidents",main="Counting Incidents by Total Structures Damaged")
+
+#but, most interested in structures damaged through time
+damag_struc<- type12_wf_inc_nimo %>% group_by(START_YEAR) %>% 
+  summarize(total_dam = sum(STR_DAMAGED_TOTAL), total_comm_dam= sum(STR_DAMAGED_COMM_TOTAL),total_res_dam=sum(STR_DAMAGED_RES_TOTAL), mean_total_damag= round(mean(STR_DAMAGED_TOTAL),0))
+
+damag_struc$year<-as.vector(as.character(damag_struc$START_YEAR))
+damag_struc$START_YEAR<-NULL
+
+
+
+melty <- reshape2::melt(damag_struc[,c('total_dam','total_res_dam','total_comm_dam',  'mean_total_damag')])#,id.vars = c('year'))
+melty$year<-rep(seq(1999,2020,1),4)
+
+
+melty_mean<-melty[melty$variable=="mean_total_damag",]
+
+melty_count<-melty[melty$variable!="mean_total_damag",]
+
+#make stacked bar chart for total/commercial/res and plot a line for average
+melty_plot <- ggplot(melty_count) 
+
+melty_plot +  geom_bar(aes(x=year,y=value,factor=variable,fill=variable,
+                       order=-as.numeric(variable)), stat="identity") +
+          geom_line(data=melty_mean, aes(x=year,y=value))+
+    ggtitle("Structures Damaged for All Incidents")+xlab("Year")+ylab("Count of Structures")+
+          geom_line(data=melty_mean, aes(x=year,y=value,colour="black"))+ #this is weird syntax, but it works
+ scale_color_manual(name="Mean Total Damag", values = c("black" = "black"))
+
+
+```
+
+ 
+ **\textcolor{red}{5. We have St. Denis code for how the structure-related columns were produced up to 2013, but we can't currently see how she integrated structure information for recent years, so it'd be good to check how structure numbers (damaged and destroyed and threatened) were tallied with the 209s.}**
+
+
+* There are more outliers in the histograms above, just plotting to get the general shape of the data (cut off few incidents with high structure counts).
+* Total damaged is often not a direct sum of residential and commercial damaged. 
+* Seems like there could be reporting change in 2015? Or wayyyy more structures started getting damaged.
+
+# Structures Destroyed
+**## Now to look at the structures *destroyed* data just to get an idea if the changes in recording through time appear in our data. Can do a deeper dive later.**
+```{r}
+
+#start by plotting all structures damaged histograms
+hist(type12_wf_inc_nimo$STR_DESTROYED_COMM_TOTAL,breaks=1000,xlim=c(0,20),xlab="Number of Commercial Structures Destroyed",ylab="Count of Incidents",main="Counting Incidents by Commercial Structures Destroyed")
+hist(type12_wf_inc_nimo$STR_DESTROYED_RES_TOTAL,breaks=1000,xlim=c(0,100),xlab="Number of Residential Structures Destroyed",ylab="Count of Incidents",main="Counting Incidents by Residential Structures Destroyed")
+hist(type12_wf_inc_nimo$STR_DESTROYED_TOTAL,breaks=1000,xlim=c(0,500),xlab="Number of Total Structures Destroyed",ylab="Count of Incidents",main="Counting Incidents by Total Structures Destroyed")
+
+#but, most interested in structures damaged through time
+dest_struc<- type12_wf_inc_nimo %>% group_by(START_YEAR) %>% 
+  summarize(total_dest = sum(STR_DESTROYED_TOTAL), comm_dest= sum(STR_DESTROYED_COMM_TOTAL),res_dest=sum(STR_DESTROYED_RES_TOTAL), mean_total_dest= round(mean(STR_DESTROYED_TOTAL),0))
+
+dest_struc$year<-as.vector(as.character(dest_struc$START_YEAR))
+dest_struc$START_YEAR<-NULL
+
+
+
+melty <- reshape2::melt(dest_struc[,c('total_dest','res_dest','comm_dest',  'mean_total_dest')])#,id.vars = c('year'))
+melty$year<-rep(seq(1999,2020,1),4)
+
+
+melty_mean<-melty[melty$variable=="mean_total_dest",]
+
+melty_count<-melty[melty$variable!="mean_total_dest",]
+
+#make stacked bar chart for total/commercial/res and plot a line for average
+melty_plot <- ggplot(melty_count) 
+
+melty_plot +  geom_bar(aes(x=year,y=value,factor=variable,fill=variable,
+                       order=-as.numeric(variable)), stat="identity") +
+  ggtitle("Structures Destroyed for All Incidents")+xlab("Year")+ylab("Count of Structures")+
+          geom_line(data=melty_mean, aes(x=year,y=value,colour="black"))+ #this is weird syntax, but it works
+ scale_color_manual(name="Mean Total Dest", values = c("black" = "black"))
+
+```
+**\textcolor{red}{6. STRUCTURES DESTROYED SEEMS TO BE MORE CONSITENTLY REPORTED THROUGH TIME THAN STRUCTURES DAMAGED?}**
+
+* There are more outliers in the histograms above, just plotting to get the general shape of the data (cut off few incidents with high structure counts).
+* Total destroyed is often not a direct sum of residential and commercial destroyed. 
+
+#Structures Max Threat
+**## Now, look at the structures *threatened* data just to get an idea. Can do a deeper dive later.**
+
+```{r}
+
+#start by plotting all structures damaged histograms
+hist(type12_wf_inc_nimo$STR_THREATENED_COMM_MAX,breaks=1000,xlim=c(0,2000),xlab="Max Number of Commercial Structures Threatened",ylab="Count of Incidents",main="Counting Incidents by Max Commercial Structures Threatened")
+hist(type12_wf_inc_nimo$STR_THREATENED_RES_MAX,breaks=1000,xlim=c(0,5000),xlab="Max Number of Residential Structures Threatened",ylab="Count of Incidents",main="Counting Incidents by Max Residential Structures Threatened")
+hist(type12_wf_inc_nimo$STR_THREATENED_MAX,breaks=1000,xlim=c(0,5000),xlab="Number of Maximum Structures Threatened",ylab="Count of Incidents",main="Counting Incidents by Max Structures Threatened")
+
+#but, most interested in structures damaged through time
+threat_struc<- type12_wf_inc_nimo %>% group_by(START_YEAR) %>% 
+  summarize(total_threat = sum(STR_THREATENED_MAX,na.rm=TRUE), comm_threat= sum(STR_THREATENED_COMM_MAX,na.rm=TRUE),res_threat=sum(STR_THREATENED_RES_MAX,na.rm=TRUE), mean_total_threat= round(mean(STR_THREATENED_MAX,na.rm=TRUE),0))
+
+threat_struc$year<-as.vector(as.character(threat_struc$START_YEAR))
+threat_struc$START_YEAR<-NULL
+
+
+
+melty <- reshape2::melt(threat_struc[,c('total_threat','res_threat','comm_threat',  'mean_total_threat')])#,id.vars = c('year'))
+melty$year<-rep(seq(1999,2020,1),4)
+
+
+melty_mean<-melty[melty$variable=="mean_total_threat",]
+
+melty_count<-melty[melty$variable!="mean_total_threat",]
+
+#make stacked bar chart for total/commercial/res and plot a line for average
+melty_plot <- ggplot(melty_count) 
+
+melty_plot +  geom_bar(aes(x=year,y=value,factor=variable,fill=variable,
+                       order=-as.numeric(variable)), stat="identity") +
+  ggtitle("Max Structures Threatened for All Incidents")+xlab("Year")+ylab("Count of Structures")+
+          geom_line(data=melty_mean, aes(x=year,y=value,colour="black"))+ #this is weird syntax, but it works
+ scale_color_manual(name="Mean Total Dest", values = c("black" = "black"))
+```
+
+**\textcolor{red}{7. 2020 goes throug the roof - check that a number for structures threatened for 2020 could be north of 1.5 million (sum max threatened for all incidents) ?}**
+
+* There are more outliers in the histograms above, just plotting to get the general shape of the data (cut off few incidents with high structure counts).
+* Total threatened seems to be mostly explained by residential, few if any commercial values AND the total threatened appears to align with the residential threatened, unlike the structured destroyed & damaged where total doesn't equal the sum of residential + commercial.
