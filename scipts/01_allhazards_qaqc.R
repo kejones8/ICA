@@ -24,10 +24,13 @@ unique(wf_inc_sitrep$IMT_MGMT_ORG_DESC)
 
 #make list of incident_ids that have type 1 or 2 designations
 type12_incid<-wf_inc_sitrep$INCIDENT_ID[wf_inc_sitrep$IMT_MGMT_ORG_DESC %in% c("Type 2 Team","Type 1 Team","Type 2 IC","Type 1 IC")] 
+type12_incid_nimo<-wf_inc_sitrep$INCIDENT_ID[wf_inc_sitrep$IMT_MGMT_ORG_DESC %in% c("Type 2 Team","Type 1 Team","Type 2 IC","Type 1 IC","NIMO")] 
 
 #baseline for sample size
 type12_wf_inc<-wf_inc[wf_inc$INCIDENT_ID %in% type12_incid,]
+type12_wf_inc_nimo<-wf_inc[wf_inc$INCIDENT_ID %in% type12_incid_nimo,]
 length(unique(type12_wf_inc$INCIDENT_ID))
+length(unique(type12_wf_inc_nimo$INCIDENT_ID))
 
 #incidents by year
 inc_peryear<- type12_wf_inc %>% group_by(START_YEAR) %>% tally()

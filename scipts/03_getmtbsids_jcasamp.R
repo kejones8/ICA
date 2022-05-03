@@ -5,22 +5,22 @@ library(sf)
 `%notin%` <- Negate(`%in%`)
 
 #read in output from 01_getk8_sample.R that is a csv of incident_ids & their associated mtbs footprints
-mysample<-read.csv("JCA_K8_Chpt\\data\\k8_incids_mtbsids_notmergedwithmtbsfootprintdownload.csv")
+jca_samp<-read.csv("data\\JCA\\JCAsamp_inc_mtbsid.csv")
 
 #read in mtbs data
 all_mtbs<-read_sf("data\\mtbs_perimeter_data\\mtbs_perims_DD.shp")
 
 colstocheck<-(all_mtbs[,c("Event_ID","Incid_Name","Ig_Date")])
 colstocheck$geometry<-NULL
-write.csv(colstocheck,"JCA_K8_Chpt\\data\\scratch\\checking_mtbs_fortypos.csv")
+#write.csv(colstocheck,"JCA_K8_Chpt\\data\\scratch\\checking_mtbs_fortypos.csv")
 
 #get a list of my mtbs ids
-mtbs_toget<-mysample$mtbs_ids
+mtbs_toget<-jca_samp$mtbs_ids
 
 #extract mtbs footprints that match our sample
 select_mtbs<-all_mtbs[all_mtbs$Event_ID %in% mtbs_toget,]
 
-write_sf(select_mtbs,"JCA_K8_Chpt\\data\\mtbs_matchallhazards.shp")
+write_sf(select_mtbs,"data\\JCA\\mtbs_match_jcasamp.shp")
 
 #how many couldn't be found in mtbs data
 howmanynomatch<-length(unique(mtbs_toget))-nrow(select_mtbs)
@@ -45,8 +45,10 @@ hist(removedfromsamp$START_YEAR,breaks=20)
 #do i need to be able to explain why more fires drop out in some years than others?
 
 #now plot out number of incidents per year in our jca_samp
-getonlyinc<-mysample[mysample$mtbs_ids %notin% notfound,]
+getonlyinc<-jca_samp[jca_samp$mtbs_ids %notin% notfound,]
 
 length(unique(getonlyinc$incident_id))
 
+#for some reason, have way more events in 1999 - like twice as many as other years? this is the same for 
+#mt chapter 1 sample, too
 hist(getonlyinc$START_YEAR,breaks=20)

@@ -68,7 +68,7 @@ num_type12nimo<-length(unique(type12_wf_inc_nimo$INCIDENT_ID))
 range(type12_wf_inc_nimo$START_YEAR)
 #range indicates there are no NAs for START_YEAR
 
-write.csv(type12_wf_inc_nimo,"oursample.csv")
+write.csv(type12_wf_inc_nimo,"data\\oursample.csv")
 
 ```
 

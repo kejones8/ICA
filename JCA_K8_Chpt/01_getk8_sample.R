@@ -86,7 +86,7 @@ colnames(incids_mtbs_nonas)[2]<-"mtbs_ids"
 
 addyears<-merge(incids_mtbs_nonas,incid_years,by.x="incident_id",by.y="INCIDENT_ID")
 
-write.csv(incids_mtbs_nonas,"JCA_K8_Chpt\\data\\k8_incids_mtbsids_notmergedwithmtbsfootprintdownload.csv")
+write.csv(addyears,"JCA_K8_Chpt\\data\\k8_incids_mtbsids_notmergedwithmtbsfootprintdownload.csv")
 
 
 
