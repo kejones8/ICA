@@ -1,5 +1,8 @@
 #this script pulls in the downloaded mtbs data (needs to be downloaded manually) & matched to the ids in our sample
 library(sf)
+library(rmapshaper)
+library(foreach) #for parallelizing intersection
+library(doParallel)
 
 #creates the notin function without importing packages
 `%notin%` <- Negate(`%in%`)
@@ -21,6 +24,45 @@ mtbs_toget<-jca_samp$mtbs_ids
 select_mtbs<-all_mtbs[all_mtbs$Event_ID %in% mtbs_toget,]
 
 write_sf(select_mtbs,"data\\JCA\\mtbs_match_jcasamp.shp")
+select_mtbs<-read_sf("data\\JCA\\mtbs_match_jcasamp.shp")
+
+#in order to buffer for threatened, need to project
+sel_mtbs_proj<-st_transform(select_mtbs, 5070)
+
+#function to buffer by 5 miles, then erase inside
+outerBuffer<-function(x, dist){
+  buff<-st_buffer(x, dist - 1, dissolve = T) #5 miles = 8047 meters
+  e<-rmapshaper::ms_erase(buff,x)
+  return(e)
+}
+
+registerDoParallel(makeCluster(12))
+ptm <- proc.time()
+print(Sys.time())
+
+mtbs_tobuf<-unique(sel_mtbs_proj$Event_ID)
+
+threat_work<-foreach(i=mtbs_tobuf, .combine = rbind, .packages=c('sf','rmapshaper')) %dopar%  {
+
+  to_buf<-sel_mtbs_proj[sel_mtbs_proj$Event_ID==i,]
+  threat<-outerBuffer(to_buf,8048)#5 miles = 8047 meters
+
+}
+print(Sys.time())
+stopImplicitCluster()
+proc.time() - ptm
+
+write_sf(threat_work,"data\\JCA\\mtbs_match_jcasamp_threat.shp",overwrite=TRUE)
+
+
+#now make a filled in buffer for using in teh intersects
+buffer_nodonuts_forstinter<-st_buffer(sel_mtbs_proj,8048)
+
+write_sf(buffer_nodonuts_forstinter,"data\\JCA\\mtbsbuf_nodonuts.shp")
+
+
+###some diagnostics on mtbs availability relative to entire sample
+
 
 #how many couldn't be found in mtbs data
 howmanynomatch<-length(unique(mtbs_toget))-nrow(select_mtbs)
