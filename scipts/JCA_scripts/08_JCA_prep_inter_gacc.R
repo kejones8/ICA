@@ -10,10 +10,10 @@ gacc_proj<-st_transform(gacc,5070)
 gacc_buf<-st_buffer(gacc_proj,0)
 
 #read in mtbs burned area our sample footprints
-mtbs_burn<-read_sf("data\\JCA\\mtbs_match_jcasamp.shp")
+mtbs_burn<-read_sf(select_mtbs_in)
 burn_proj<-st_transform(mtbs_burn,5070)
 #read in mtbs threatened area our sample 
-mtbs_threat<-read_sf("data\\JCA\\mtbs_match_jcasamp_threat.shp")
+mtbs_threat<-read_sf(threat_work_out)
 threat_proj<-st_transform(mtbs_threat,5070)
 threat_buf<-st_buffer(threat_proj,0)
 
@@ -63,7 +63,7 @@ proc.time() - ptm
 
 #now, want to join the threat/burn gacc data to the mtbs_id & incident ids
 #and remove threatened gaccs that are already represented in burned gaccs 
-mtbs_incid<-read.csv("data\\JCA\\JCAsamp_inc_mtbsid.csv")
+mtbs_incid<-read.csv(jca_samp_in)
 
 threat_gacc_incid<-merge(threat_gacc,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
 burn_gacc_incid<-merge(burn_gacc,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
@@ -87,13 +87,13 @@ threat_gacc_unique<-unique(threat_gacc_rmburn[,c("incident_id","GACCAbbrev")])
 
 threat_blm_cnt<-threat_gacc_unique %>% group_by(incident_id) %>% summarize(cnt_gacc_threat=n_distinct(GACCAbbrev))
 
-write.csv(threat_blm_cnt,"data\\JCA\\threat_gacc_cnt.csv")
+write.csv(threat_blm_cnt,threat_gacc_count_out)
 
 burn_gacc_unique<-unique(burn_gacc_incid[,c("incident_id","GACCAbbrev")])
 
 burn_gacc_cnt<-burn_gacc_incid %>% group_by(incident_id) %>% summarize(cnt_gacc_burn=n_distinct(GACCAbbrev))
 
 
-write.csv(burn_gacc_cnt,"data\\JCA\\burn_gacc_cnt.csv")
+write.csv(burn_gacc_cnt,burn_gacc_count_out)
 
 

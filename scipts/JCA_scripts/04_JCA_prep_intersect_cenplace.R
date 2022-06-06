@@ -39,12 +39,12 @@ cenpl_funstata<-read_sf("raw_data\\census_place\\national_funcstata.shp")
 ###now, want to intersect cenpl data with mtbs footprints 
 
 #read in mtbs footprints & threatened buffers for jca subsample
-jca_mtbs<-read_sf("data\\JCA\\mtbs_match_jcasamp.shp")
+jca_mtbs<-read_sf(select_mtbs_in)
 
 jca_alb<-st_transform(jca_mtbs, 5070)
 jca_buf<-st_buffer(jca_alb,0)
 
-mtbs_threat<-read_sf("data\\JCA\\mtbs_match_jcasamp_threat.shp")
+mtbs_threat<-read_sf(threat_work_out)
 
 threat_alb<-st_transform(mtbs_threat, 5070)
 threat_buf<-st_buffer(threat_alb,0)
@@ -111,7 +111,7 @@ st_geometry(cenpl_threat)<-NULL
 
 
 #reading this in to link list of incidents with mtbs_ids
-mtbs_withincid<-read.csv("data\\JCA\\JCAsamp_inc_mtbsid.csv")
+mtbs_withincid<-read.csv(jca_samp_in)
 
 
 #count burned cenpl
@@ -136,5 +136,5 @@ threat_cenpl_unique<-unique(threat_cenpl_rmburn[,c("incident_id","GEOID")])
 count_cenpl_threat<-threat_cenpl_unique %>% group_by(incident_id) %>% summarize(cnt_cenpl_threat=n_distinct(GEOID))
 
 
-write.csv(count_cenpl_burn,"data\\JCA\\count_cenpl_burn.csv")
-write.csv(count_cenpl_threat,"data\\JCA\\count_cenpl_threat.csv")
+write.csv(count_cenpl_burn,count_cenpl_burn_out)
+write.csv(count_cenpl_threat,count_cenpl_threat_out)

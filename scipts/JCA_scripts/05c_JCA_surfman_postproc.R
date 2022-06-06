@@ -9,9 +9,9 @@
 
 #reads in both burned juridictions and threatened jurisdictions for cleaning
 #section below (column naming,deletion) might need to get revisited based on structure of csvs written out from 05b
-burn<-read.csv("data\\JCA\\burned_juris_byincid.csv")
+burn<-read.csv(burn_juris_byincid_out)
 burn$burn_threat<-"burn"
-threat<-read.csv("data\\JCA\\THREAT_juris_burnedrm.csv")
+threat<-read.csv(threat_juris_byincid_out)
 end<-ncol(threat)
 threat_up<-threat[,-c(end-1,end)] #remove previous columns written out into csv
 threat_up$burn_threat<-"threat"
@@ -61,8 +61,8 @@ dod_count_threat<-fed_threat_dod %>% group_by(incident_id) %>% summarize(dod_cou
 dod_count_threat$dod_cnt_thrt_cln<-1
 dod_count_threat$dod_count<-NULL
 
-write.csv(dod_count_burn,"data\\JCA\\dod_burn_count.csv")
-write.csv(dod_count_threat,"data\\JCA\\dod_threat_count.csv")
+write.csv(dod_count_burn,dod_burn_count_out)
+write.csv(dod_count_threat,dod_threat_count_out)
 
 
 #treat doe the same way as DOD
@@ -78,8 +78,8 @@ doe_count_threat<-fed_threat_doe %>% group_by(incident_id) %>% summarize(doe_cou
 doe_count_threat$doe_cnt_thrt_cln<-1
 doe_count_threat$doe_count<-NULL
 
-write.csv(doe_count_burn,"data\\JCA\\doe_burn_count.csv")
-write.csv(doe_count_threat,"data\\JCA\\doe_threat_count.csv")
+write.csv(doe_count_burn,doe_burn_count_out)
+write.csv(doe_count_threat,doe_threat_count_out)
 
 
 #handle BOR the same as dod & doe
@@ -95,8 +95,8 @@ bor_count_threat<-fed_threat_bor %>% group_by(incident_id) %>% summarize(bor_cou
 bor_count_threat$bor_cnt_thrt_cln<-1
 bor_count_threat$bor_count<-NULL
 
-write.csv(bor_count_burn,"data\\JCA\\bor_burn_count.csv")
-write.csv(bor_count_threat,"data\\JCA\\bor_threat_count.csv")
+write.csv(bor_count_burn,bor_burn_count_out)
+write.csv(bor_count_threat,bor_threat_count_out)
 
 #TVA
 tva_count_burn<-fed_burn %>% filter(JrsdcUI=="TNTVA") %>% group_by(incident_id) %>% summarize(tva_count=n_distinct(JrsdcUN))
@@ -112,8 +112,8 @@ tva_count_threat$tva_cnt_thrt_cln<-1
 tva_count_threat$tva_count<-NULL
 
 
-write.csv(tva_count_burn,"data\\JCA\\tva_burn_count.csv")
-write.csv(tva_count_threat,"data\\JCA\\tva_threat_count.csv")
+write.csv(tva_count_burn,tva_burn_count_out)
+write.csv(tva_count_threat,tva_threat_count_out)
 
 
 #USFWS
@@ -129,8 +129,8 @@ usfws_count_threat<-fed_threat_usfws %>% group_by(incident_id) %>% summarize(usf
 usfws_count_threat$usfws_cnt_thrt_cln<-1
 usfws_count_threat$usfws_count<-NULL
 
-write.csv(usfws_count_burn,"data\\JCA\\usfws_count_burn.csv")
-write.csv(usfws_count_threat,"data\\JCA\\usfws_count_threat.csv")
+write.csv(usfws_count_burn,usfws_burn_count_out)
+write.csv(usfws_count_threat,usfws_threat_count_out)
 
 #NPS
 #want to count unique JrsdcUI codes
@@ -138,8 +138,8 @@ nps_count_burn<-fed_burn %>% filter(JrsdcUA=="NPS") %>% group_by(incident_id) %>
 
 nps_count_threat<-fed_threat_burnrm %>% filter(JrsdcUA=="NPS") %>% group_by(incident_id) %>% summarize(nps_count=n_distinct(JrsdcUN))
 
-write.csv(nps_count_burn,"data\\JCA\\nps_count_burn.csv")
-write.csv(nps_count_threat,"data\\JCA\\nps_count_threat.csv")
+write.csv(nps_count_burn,nps_burn_count_out)
+write.csv(nps_count_threat,nps_threat_count_out)
 
 #USFS
 #first, do some cleaning for USFS - the Sumter
@@ -148,47 +148,51 @@ usfs_burn<-fed_burn %>% filter(JrsdcUA=="USFS")
 usfs_threat<-fed_threat_burnrm%>% filter(JrsdcUA=="USFS")
 
 
-#fixing sumter events manually now because don't want to reintersecte everything
-sumt<-read.csv("data\\JCA\\marion_sumter_corrections.csv")
+# #fixing sumter events manually now because don't want to reintersecte everything
+# sumt<-read.csv("data\\JCA\\marion_sumter_corrections.csv")
+# 
+# mtbs_tochange<-sumt$MTBS_ID
+# 
+# usfs_burn_badsumtrm<-usfs_burn[usfs_burn$Event_ID %notin% mtbs_tochange,]
+# usfs_threat_badsumtrm<-usfs_threat[usfs_threat$Event_ID %notin% mtbs_tochange,]
+# 
+# 
+# sumt_burn<-sumt[sumt$burn_threat=="burn",]
+# sumt_threat<-sumt[sumt$burn_threat=="threat",]
 
-mtbs_tochange<-sumt$MTBS_ID
-
-usfs_burn_badsumtrm<-usfs_burn[usfs_burn$Event_ID %notin% mtbs_tochange,]
-usfs_threat_badsumtrm<-usfs_threat[usfs_threat$Event_ID %notin% mtbs_tochange,]
-
-
-sumt_burn<-sumt[sumt$burn_threat=="burn",]
-sumt_threat<-sumt[sumt$burn_threat=="threat",]
-
-usfs_burn_intermed<-merge(usfs_burn,sumt_burn,by.x="Event_ID",by.y="MTBS_ID")
-usfs_burn_intermed$JrsdcUN<-usfs_burn_intermed$New_Forest
-usfs_burn_intermed$burn_threat.y<-NULL
-usfs_burn_intermed$New_Forest<-NULL
-colnames(usfs_burn_intermed)[ncol(usfs_burn_intermed)]<-"burn_threat"
-
-#give it same column order to rbind
-usfs_burn_intermed<-usfs_burn_intermed[names(usfs_burn_badsumtrm)]
-
-usfs_threat_intermed<-merge(usfs_threat,sumt_threat,by.x="Event_ID",by.y="MTBS_ID")
-usfs_threat_intermed$JrsdcUN<-usfs_threat_intermed$New_Forest
-usfs_threat_intermed$burn_threat.y<-NULL
-usfs_threat_intermed$New_Forest<-NULL
-colnames(usfs_threat_intermed)[ncol(usfs_threat_intermed)]<-"burn_threat"
-
-#give it same column order to rbind
-usfs_threat_intermed<-usfs_threat_intermed[names(usfs_threat_badsumtrm)]
-
-countthese_usfs_burn<-rbind(usfs_burn_badsumtrm,usfs_burn_intermed)
-countthese_usfs_threat<-rbind(usfs_threat_badsumtrm,usfs_threat_intermed)
+# usfs_burn_intermed<-merge(usfs_burn,sumt_burn,by.x="Event_ID",by.y="MTBS_ID")
+# usfs_burn_intermed$JrsdcUN<-usfs_burn_intermed$New_Forest
+# usfs_burn_intermed$burn_threat.y<-NULL
+# usfs_burn_intermed$New_Forest<-NULL
+# colnames(usfs_burn_intermed)[ncol(usfs_burn_intermed)]<-"burn_threat"
+# 
+# #give it same column order to rbind
+# usfs_burn_intermed<-usfs_burn_intermed[names(usfs_burn_badsumtrm)]
+# 
+# usfs_threat_intermed<-merge(usfs_threat,sumt_threat,by.x="Event_ID",by.y="MTBS_ID")
+# usfs_threat_intermed$JrsdcUN<-usfs_threat_intermed$New_Forest
+# usfs_threat_intermed$burn_threat.y<-NULL
+# usfs_threat_intermed$New_Forest<-NULL
+# colnames(usfs_threat_intermed)[ncol(usfs_threat_intermed)]<-"burn_threat"
+# 
+# #give it same column order to rbind
+# usfs_threat_intermed<-usfs_threat_intermed[names(usfs_threat_badsumtrm)]
+# 
+# countthese_usfs_burn<-rbind(usfs_burn_badsumtrm,usfs_burn_intermed)
+# countthese_usfs_threat<-rbind(usfs_threat_badsumtrm,usfs_threat_intermed)
 
 
 #want to count unique JrsdcUI codes
-usfs_count_burn<-countthese_usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+# usfs_count_burn<-countthese_usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+# 
+# usfs_count_threat<-countthese_usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
 
-usfs_count_threat<-countthese_usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+usfs_count_burn<-usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
 
-write.csv(usfs_count_burn,"data\\JCA\\usfs_count_burn.csv")
-write.csv(usfs_count_threat,"data\\JCA\\usfs_count_threat.csv")
+usfs_count_threat<-usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+
+write.csv(usfs_count_burn,usfs_burn_count_out)
+write.csv(usfs_count_threat,usfs_threat_count_out)
 
 
 
@@ -212,8 +216,8 @@ othtrib_count_burn<-other_tribal_burn  %>% group_by(incident_id) %>% summarize(t
 
 othtrib_count_threat<-othtrib_threat_burnrm %>% group_by(incident_id) %>% summarize(trib_count=n_distinct(JrsdcUN))
 
-write.csv(othtrib_count_burn,"data\\JCA\\othtrib_count_burn.csv")
-write.csv(othtrib_count_threat,"data\\JCA\\othtrib_count_threat.csv")
+write.csv(othtrib_count_burn,othtrib_burn_count_out)
+write.csv(othtrib_count_threat,othtrib_threat_count_out)
 
 
 
@@ -246,8 +250,8 @@ ancsa_count_threat<-fed_threat_ancsa %>% group_by(incident_id) %>% summarize(anc
 ancsa_count_threat$ancsa_cnt_thrt_cln<-1
 ancsa_count_threat$ancsa_count<-NULL
 
-write.csv(ancsa_count_burn,"data\\JCA\\ancsa_burn_count.csv")
-write.csv(ancsa_count_threat,"data\\JCA\\ancsa_threat_count.csv")
+write.csv(ancsa_count_burn,ancsa_burn_count_out)
+write.csv(ancsa_count_threat,ancsa_threat_count_out)
 
 
 

@@ -8,7 +8,7 @@ library(doParallel)
 `%notin%` <- Negate(`%in%`)
 
 #read in output from 01_getk8_sample.R that is a csv of incident_ids & their associated mtbs footprints
-jca_samp<-read.csv(jca_samp_in)
+jca_samp<-read.csv("K8_Chpt\\data\\k8_incids_mtbsids_notmergedwithmtbsfootprintdownload.csv")
 
 #read in mtbs data
 all_mtbs<-read_sf("data\\mtbs_perimeter_data\\mtbs_perims_DD.shp")
@@ -23,8 +23,8 @@ mtbs_toget<-jca_samp$mtbs_ids
 #extract mtbs footprints that match our sample
 select_mtbs<-all_mtbs[all_mtbs$Event_ID %in% mtbs_toget,]
 
-write_sf(select_mtbs,select_mtbs_out)
-select_mtbs<-read_sf(select_mtbs_in)
+write_sf(select_mtbs,"K8_Chpt\\data\\k8_mtbs_match_jcasamp.shp")
+select_mtbs<-read_sf("K8_Chpt\\data\\k8_mtbs_match_jcasamp.shp")
 
 #in order to buffer for threatened, need to project
 sel_mtbs_proj<-st_transform(select_mtbs, 5070)
@@ -52,13 +52,13 @@ print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
 
-write_sf(threat_work,threat_work_out,overwrite=TRUE)
+write_sf(threat_work,"K8_Chpt\\data\\k8_mtbs_match_jcasamp_threat.shp",overwrite=TRUE)
 
 
 #now make a filled in buffer for using in teh intersects
-buffer_nodonuts_fortinter<-st_buffer(sel_mtbs_proj,8048)
+buffer_nodonuts_forstinter<-st_buffer(sel_mtbs_proj,8048)
 
-write_sf(buffer_nodonuts_fortinter,buffer_nodonuts_fortinter_out)
+write_sf(buffer_nodonuts_forstinter,"K8_Chpt\\data\\k8_mtbsbuf_nodonuts.shp")
 
 
 ###some diagnostics on mtbs availability relative to entire sample

@@ -6,7 +6,7 @@ library(dplyr)
 library(tidyr)
 
 #read in output from 01_allhazards_
-ica_samp<-read.csv("data\\oursample.csv")
+ica_samp<-read.csv("oursample.csv")
 
 length(unique(ica_samp$INCIDENT_ID))
 

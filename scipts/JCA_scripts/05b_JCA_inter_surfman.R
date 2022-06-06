@@ -25,18 +25,21 @@ library(doParallel)
 # surfman<-read_sf("data\\JCA\\surfman_clean_0531.shp")
 # surfman_buf<-st_buffer(surfman,0)
 # write_sf(surfman_buf,"data\\JCA\\surfman_buf0_0531_usethis.shp")
-surfman_buf<-read_sf("data\\JCA\\surfman_fin.shp")
+surfman_buf<-st_read("data\\JCA\\surfman_fin.shp")
+surfman_buf<-st_transform(surfman_buf,5070)
 
 #reading this in now for use later in summarizing information by incident
-mtbs_withincid<-read.csv("data\\JCA\\JCAsamp_inc_mtbsid.csv")
+mtbs_withincid<-read.csv(jca_samp_in)
 
 
 #reading in the mtbs w/ 5 mile buffer (no cut outs for this first st_intersects)
-buf_nodonut<-read_sf("data\\JCA\\mtbsbuf_nodonuts.shp")
+buf_nodonut<-st_read(buffer_nodonuts_fortinter_out)
+buf_nodonut<-st_transform(buf_nodonut,5070)
 
 #identifies which polygons in surface management intersect any one of the mtbs w/ buf
 #adds T/F to indicator column
 surfman_buf$indicator <- st_intersects(surfman_buf, buf_nodonut) %>% lengths > 0
+
 
 #make surfman smaller by just grabbing those we know we'll want to work with 
 surf_dointersect<-surfman_buf[surfman_buf$indicator==TRUE,]
@@ -44,17 +47,18 @@ surf_dointersect<-surfman_buf[surfman_buf$indicator==TRUE,]
 
 #for every year we have burned and threatened footprints
 #read in burned
-burned<-read_sf("data\\JCA\\mtbs_match_jcasamp.shp")
+burned<-st_read(select_mtbs_out)
 burned_proj<-st_transform(burned,5070)
 
 #do the st_intersects again and write out and indicator column
 surf_dointersect$burn_inter<-st_intersects(surf_dointersect, burned_proj) %>% lengths > 0
 surf_inters_burn<-surf_dointersect[surf_dointersect$burn_inter==TRUE,]
+
 #write out just the surfman polygons that will get intersected with burned areas
 #write_sf(surf_inters_burn,"data\\surf_thatintersect_burn.shp")
 
 #read in threatened
-threat<-read_sf("data\\JCA\\mtbs_match_jcasamp_threat.shp")
+threat<-st_read(threat_work_out)
 threat_proj<-st_transform(threat,5070)
 
 #do the st_intersects again and write out and indicator column
@@ -85,7 +89,7 @@ stopImplicitCluster()
 proc.time() - ptm
 
 #writes out a shapefile with all mtbs footprints and the surf management polygons they intersect
-write_sf(burn_intersected,"data\\JCA\\burn_surfman_inter.shp")
+write_sf(burn_intersected,burn_surfman_inter_out,overwrite=TRUE)
 
 #now want to join this with a list of mtbsids by INCIDENT_IDs
 #this links all jurisdictional data to INCIDENT_ID
@@ -98,7 +102,7 @@ st_geometry(burn_inter_trimmed)<-NULL #get rid of the geom column
 burned_jurs_unique<-unique(burn_inter_trimmed[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")])
 
 #write out a list of burned, unique jurisdictions
-write.csv(burned_jurs_unique,"data\\JCA\\burned_juris_byincid.csv")
+write.csv(burned_jurs_unique,burn_juris_byincid_out)
 
 #then do threatened intersection
 
@@ -125,8 +129,8 @@ stopImplicitCluster()
 proc.time() - ptm
 
 #write out all surfman polygons intersected wtih individual threatened areas
-write_sf(threat_intersected,"data\\JCA\\threat_surfman_inter.shp",overwrite=TRUE)
-threat_intersected<-read_sf("data\\JCA\\threat_surfman_inter.shp")
+write_sf(threat_intersected,threat_surfman_inter_out,overwrite=TRUE)
+threat_intersected<-read_sf(threat_surfman_inter_out)
 
 #now want to join this with a list of mtbsids by INCIDENT_IDs
 #this links all jurisdictional data to INCIDENT_IDbove
@@ -140,7 +144,7 @@ threatened_jurs_unique<-unique(threat_inter_trimmed)
 ##EXTRA step required for threatened data becauase we want mutually exclusive lists
 #only include in threatened list jurisdictions that were not already burned
 only_threat<-threatened_jurs_unique[threatened_jurs_unique$brn_ntr==FALSE,]
-write.csv(only_threat,"data\\JCA\\THREAT_juris_burnedrm.csv")
+write.csv(only_threat,threat_juris_byincid_out)
 
 #removed this stuff because it doesn't capture what i need for sates/counties
 # #now, make list of incidents that have NON federal lands burned 
@@ -157,5 +161,5 @@ jurs_threat_ontononfed<-threatened_jurs_unique[is.na(threatened_jurs_unique$Jrsd
 threat_incid_count_stcnty<-unique(jurs_threat_ontononfed$incident_id)
 
 ###don't actually think i use/need these....
-write.csv(burn_incid_count_stcnty,"data\\JCA\\burn_incid_nonfed.csv")
-write.csv(threat_incid_count_stcnty,"data\\JCA\\threat_incid_nonfed.csv")
+write.csv(burn_incid_count_stcnty,burn_incid_count_stcnty_out)
+write.csv(threat_incid_count_stcnty,threat_incid_count_stcnty_out)

@@ -7,9 +7,9 @@ library(foreach) #for parallelizing intersection
 library(doParallel)
 
 #read in burn & threat intersections
-surfman_int_burnarea<-read_sf("data\\JCA\\burn_surfman_inter.shp")
+surfman_int_burnarea<-read_sf(burn_surfman_inter_out)
 
-surfman_int_threatarea<-read_sf("data\\JCA\\threat_surfman_inter.shp")
+surfman_int_threatarea<-read_sf(threat_surfman_inter_out)
 
 #where JrsdcUK is NA, make census
 surfman_int_burnarea$JrsdcUK[is.na(surfman_int_burnarea$JrsdcUK)]<-"census"
@@ -20,7 +20,7 @@ nonfed_surfman_burn_buf<-st_buffer(nonfed_surfman_burn,0)
 #nonfed_surfman_burn_buf<-nonfed_surfman_burn_buf[!is.na(nonfed_surfman_burn_buf$Event_ID),]
 
 nonfed_burn_diss <- nonfed_surfman_burn_buf %>% group_by(Event_ID) %>% summarize()
-write_sf(nonfed_burn_diss,"data\\JCA\\nonfed_burn_diss.shp")
+write_sf(nonfed_burn_diss,nonfed_burn_diss_out)
 
 #nonfed_surfman_burn_union<-st_union(nonfed_surfman_burn)
 #write_sf(nonfed_surfman_burn_union,"data\\JCA\\nonfed_burn_stcntyuse.shp")
@@ -30,7 +30,7 @@ nonfed_surfman_threat<-surfman_int_threatarea[surfman_int_threatarea$JrsdcUK!="F
 nonfed_surfman_threat_buf<-st_buffer(nonfed_surfman_threat,0)
 #nonfed_surfman_threat_buf<-nonfed_surfman_threat_buf[!is.na(nonfed_surfman_threat_buf$Evnt_ID),]
 nonfed_threat_diss <- nonfed_surfman_threat_buf %>% group_by(Evnt_ID) %>% summarize()
-write_sf(nonfed_threat_diss,"data\\JCA\\nonfed_threat_diss.shp")
+write_sf(nonfed_threat_diss,nonfed_threat_diss_out)
 #nonfed_surfman_threat_union<-st_union(nonfed_surfman_threat)
 #write_sf(nonfed_surfman_threat_union,"data\\JCA\\nonfed_threat_stcntyuse.shp")
 #nonfed_surfman_threat_union<-read_sf("data\\JCA\\nonfed_threat_stcntyuse.shp")
@@ -58,14 +58,14 @@ state_buf<-st_buffer(state_proj,0)
 
 # 
 #reading this in to link list of incidents with mtbs_ids
-mtbs_withincid<-read.csv("data\\JCA\\JCAsamp_inc_mtbsid.csv")
+mtbs_withincid<-read.csv(jca_samp_in)
 
 #read in mtbs burned area our sample footprints
-mtbs_burn<-read_sf("data\\JCA\\mtbs_match_jcasamp.shp")
+mtbs_burn<-read_sf(select_mtbs_out)
 burn_proj<-st_transform(mtbs_burn,5070)
 burn_buf<-st_buffer(burn_proj,0)
 #read in mtbs threatened area our sample
-mtbs_threat<-read_sf("data\\JCA\\mtbs_match_jcasamp_threat.shp")
+mtbs_threat<-read_sf(threat_work_out)
 threat_proj<-st_transform(mtbs_threat,5070)
 threat_buf<-st_buffer(threat_proj,0)
 # 
@@ -326,11 +326,11 @@ threat_st_jurs_tokeep<-threat_st_uni[threat_st_uni$torm_inburn==FALSE,]
 threat_cnty_cnt<-threat_cnt_jurs_tokeep %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
 threat_st_cnt<-threat_st_jurs_tokeep %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
 
-write.csv(threat_cnty_cnt,"data\\JCA\\threat_cnty_count.csv")
-write.csv(threat_st_cnt,"data\\JCA\\threat_st_count.csv")
+write.csv(threat_cnty_cnt,threat_county_count_out)
+write.csv(threat_st_cnt,threat_state_count_out)
 
 burn_cnty_cnt<-burn_cnty_uni %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
 burn_st_cnt<-burn_st_uni %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
 
-write.csv(burn_cnty_cnt,"data\\JCA\\burn_cnty_count.csv")
-write.csv(burn_st_cnt,"data\\JCA\\burn_st_count.csv")
+write.csv(burn_cnty_cnt,burn_county_count_out)
+write.csv(burn_st_cnt,burn_state_count_out)

@@ -17,8 +17,8 @@ blm_proj<-st_transform(blm,5070)
 #blm_buf<-st_buffer(blm_proj,0)
 
 #read in spatial file that grabs all surfman that intersect burned and threatened areas
-surfman_int_burnarea<-read_sf("data\\JCA\\burn_surfman_inter.shp")
-surfman_int_threatarea<-read_sf("data\\JCA\\threat_surfman_inter.shp")
+surfman_int_burnarea<-read_sf(burn_surfman_inter_out)
+surfman_int_threatarea<-read_sf(threat_surfman_inter_out)
 
 #get the bia & blm areas out of those shapefiles
 surfman_burn_bia<-surfman_int_burnarea[surfman_int_burnarea$JrsdcUA=="BIA",]
@@ -39,10 +39,10 @@ surfman_threat_blm_regions<-st_intersection(surfman_threat_blm,blm_proj)
 #need to intersect blm & bia with threatened and burned data - not many bia/blm regions, so no st_intersects for now
 
 #read in mtbs burned area our sample footprints
-mtbs_burn<-read_sf("data\\JCA\\mtbs_match_jcasamp.shp")
+mtbs_burn<-read_sf(select_mtbs_out)
 burn_proj<-st_transform(mtbs_burn,5070)
 #read in mtbs threatened area our sample 
-mtbs_threat<-read_sf("data\\JCA\\mtbs_match_jcasamp_threat.shp")
+mtbs_threat<-read_sf(threat_work_out)
 threat_proj<-st_transform(mtbs_threat,5070)
 threat_buf<-st_buffer(threat_proj,0)
 
@@ -130,7 +130,7 @@ proc.time() - ptm
 
 
 #now, want to join the threat/burn bia/blm data to the mtbs_id & incident ids
-mtbs_incid<-read.csv("data\\JCA\\JCAsamp_inc_mtbsid.csv")
+mtbs_incid<-read.csv(jca_samp_in)
 
 threat_blm_incid<-merge(threat_blm,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
 burn_blm_incid<-merge(burn_blm,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
@@ -166,8 +166,8 @@ threat_bia_unique<-unique(threat_bia_rmburn[,c("incident_id","RegionAbbv")])
 threat_blm_cnt<-threat_blm_unique %>% group_by(incident_id) %>% summarize(cnt_blm_threat=n_distinct(PARENT_NAM))
 threat_bia_cnt<-threat_bia_unique %>% group_by(incident_id) %>% summarize(cnt_bia_threat=n_distinct(RegionAbbv))
 
-write.csv(threat_blm_cnt,"data\\JCA\\threat_blm_cnt.csv")
-write.csv(threat_bia_cnt,"data\\JCA\\threat_bia_cnt.csv")
+write.csv(threat_blm_cnt,threat_blm_count_out)
+write.csv(threat_bia_cnt,threat_bia_count_out)
 
 burn_blm_unique<-unique(burn_blm_incid[,c("incident_id","PARENT_NAM")])
 burn_bia_unique<-unique(burn_bia_incid[,c("incident_id","RegionAbbv")])
@@ -175,5 +175,5 @@ burn_bia_unique<-unique(burn_bia_incid[,c("incident_id","RegionAbbv")])
 burn_blm_cnt<-burn_blm_unique %>% group_by(incident_id) %>% summarize(cnt_blm_burn=n_distinct(PARENT_NAM))
 burn_bia_cnt<-burn_bia_unique %>% group_by(incident_id) %>% summarize(cnt_bia_burn=n_distinct(RegionAbbv))
 
-write.csv(burn_blm_cnt,"data\\JCA\\burn_blm_cnt.csv")
-write.csv(burn_bia_cnt,"data\\JCA\\burn_bia_cnt.csv")
+write.csv(burn_blm_cnt,burn_blm_count_out)
+write.csv(burn_bia_cnt,burn_bia_count_out)
