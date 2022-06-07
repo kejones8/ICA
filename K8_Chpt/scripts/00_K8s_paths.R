@@ -111,3 +111,7 @@ burn_gacc_count_out<-"K8_Chpt\\data\\k8_burn_gacc_count.csv"
 #burn_gacc_count_out
 #threat_gacc_count_out
 final_out<-"K8_Chpt\\data\\k8_incid_withjuris_counts.csv"
+
+##13_area_calc_func.R
+burn_threat_perc_area_tab_out<-"K8_Chpt\\data\\areas_burn_threat_byjurislevel.csv"
+

@@ -1,4 +1,16 @@
-calc_areas<-function (uni_incids,nonemptygeoms,burn_or_threatcols){
+library(sf)
+library(rgeos)
+library(sp)
+library(raster)
+require(UScensus2010)
+library(stringr)
+library(tidyverse)
+
+
+calc_areas<-function (uni_incids,nonemptygeoms,burn_or_threatcols_perc,burn_or_threatcols_acre){
+  
+
+  
   
   # nonemptygeoms<-nonemptygeoms_burn
   # i<-"2005_AK-SWS-504153_PILOT POINT"
@@ -136,15 +148,22 @@ for (i in uni_incids){
 }
 #return(put_calcs_here)
 put_calcs_here$jur_group_fac<-as.factor(put_calcs_here$jur_group)
+#return(put_calcs_here)
 
-wut_reg<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
+wut_reg_perc<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
+wut_reg_acre<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnacres=sum(areaburned_acres))
 
-wide_reg<-pivot_wider(wut_reg, names_from = jur_group_fac, values_from = jur_group_burnperc)
+wide_reg_perc<-tidyr::pivot_wider(wut_reg_perc, names_from = jur_group_fac, values_from = jur_group_burnperc)
+wide_reg_acre<-tidyr::pivot_wider(wut_reg_acre, names_from = jur_group_fac, values_from = jur_group_burnacres)
 
 ###need a way to insert these colnames based on threatened/burned running
 #pass them in as argument
-colnames(wide_reg)<-burn_or_threatcols
+colnames(wide_reg_perc)<-burn_or_threatcols_perc
+colnames(wide_reg_acre)<-burn_or_threatcols_acre
 
-return(wide_reg)
+perc_area<-merge(wide_reg_perc,wide_reg_acre,by="incident_id",all=TRUE)
+return(perc_area)
+
+#return(wide_reg)
 
 }

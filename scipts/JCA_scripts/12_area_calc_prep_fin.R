@@ -10,7 +10,7 @@ library(sp)
 library(raster)
 require(UScensus2010)
 library(stringr)
-library(dplyr)
+library(tidyverse)
 
 #read in data with mtbs_ids & incident_ids
 mysamp<-read.csv(jca_samp_in)
@@ -79,17 +79,21 @@ threat_uni_incid<-jur_counts$incident_id[jur_counts$jur_threatened!=0]
 
 
 #colnames to pass as argument to 13_area_calc_func
-burn_colnames<-c("incident_id","Federal_PercBurn","Other_PercBurn","Private_PercBurn","State_PercBurn","Tribal_PercBurn")
-threat_colnames<-c("incident_id","Federal_PercThreat","Other_PercThreat","Private_PercThreat","State_PercThreat","Tribal_PercThreat")
-
-burned_areas_tab<-calc_areas(burn_uni_incid,nonemptygeoms_burn,burn_colnames)
-threat_areas_tab<-calc_areas(threat_uni_incid,nonemptygeoms_threat,threat_colnames)
-
+burn_perc_colnames<-c("incident_id","Federal_PercBurn","Other_PercBurn","Private_PercBurn","State_PercBurn","Tribal_PercBurn")
+burn_acre_colnames<-c("incident_id","Federal_AcreBurn","Other_AcreBurn","Private_AcreBurn","State_AcreBurn","Tribal_AcreBurn")
+threat_perc_colnames<-c("incident_id","Federal_PercThreat","Other_PercThreat","Private_PercThreat","State_PercThreat","Tribal_PercThreat")
+threat_acre_colnames<-c("incident_id","Federal_AcreThreat","Other_AcreThreat","Private_AcreThreat","State_AcreThreat","Tribal_AcreThreat")
 
 
-possible_final_columns<-merge(burned_areas_tab,threat_areas_tab,by="incident_id",all=TRUE)
+#jur_areas_vars are paths from 00_K8s_paths.R
+burned_areas_tab<-calc_areas(burn_uni_incid,nonemptygeoms_burn,burn_perc_colnames,burn_acre_colnames)
+threat_areas_tab<-calc_areas(threat_uni_incid,nonemptygeoms_threat,threat_perc_colnames,threat_acre_colnames)
 
+burn_threat_perc_area_tab<-merge(burned_areas_tab,threat_areas_tab,by="incident_id",all=TRUE)
 
+#possible_final_columns<-merge(burned_areas_tab,threat_areas_tab,by="incident_id",all=TRUE)
 
-write.csv(possible_final_columns,"area_affec_threat_by_jurislevel_0826.csv")
+#IMPORTANT FOR THIS WRITE OUT: NAs here are actually NAs, not 0. 
+#They occur when no jurisdictions were threatened beyond already burned jurisdictions. 
+write.csv(burn_threat_perc_area_tab,burn_threat_perc_area_tab_out)
 
