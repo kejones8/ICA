@@ -5,13 +5,27 @@ library(dplyr)
 
 #read in mtbs footprints in sample - don't think I need to represent threatened extent spatially
 #because all attributes are technically tied to the single incident, which is represented as the burned boudnary
-mtbs_insamp<-st_read(select_mtbs_out)
+mtbs_insamp<-read_sf(select_mtbs_out)
+
+mtbs_incid_proj<-st_transform(mtbs_insamp,5070)
 
 #read in table that joins mtbs & incids
 link_mtbs_incids<-read.csv(jca_samp_in)
 
 #join incids to mtbs
-mtbs_incid<-merge(link_mtbs_incids,mtbs_insamp,by.x="mtbs_ids",by.y="Event_ID",all.x=TRUE)
+mtbs_incid<-merge(link_mtbs_incids,mtbs_incid_proj,by.x="mtbs_ids",by.y="Event_ID",all.x=TRUE)
+dim(mtbs_incid)
+
+write_sf(mtbs_incid,connect_mtbs_incids)
+
+#make geometries representative of whole incident id/all mtbs footprints
+incid_polys<-mtbs_incid %>%
+  group_by(incident_id) %>% 
+  summarize(geometry = st_union(geometry))
+
+
+#dissolve all mtbs footprints to incident id to join to incident level data
+write_sf(incid_polys,incid_multipolys)
 
 #read in the jurisdictional count data 
 jur_counts<-read.csv(final_out)
@@ -23,7 +37,7 @@ jur_area<-read.csv(burn_threat_perc_area_tab_out)
 tab_merged<-merge(jur_counts,jur_area,by="incident_id",all=TRUE)
 
 #merge it all together
-what_i_need<-merge(mtbs_incid,tab_merged,by="incident_id")
+what_i_need<-merge(incid_polys,tab_merged,by="incident_id")
 
 #explore some stats for mapping 
 
@@ -59,29 +73,36 @@ hist(what_i_need$jur_threatened)
 #if cenpl/county > 0 count
 
 ### was trying to identify across the federal tribal state burned/threat columns to count where the row for that columns was not zero
-# don't want to sum the values, jst want to tally that it's nonzero
+#don't want to sum the values, just want to tally that it's nonzero
 #want to do the same thing for county/cenpl, but across the two columns either or needs to be non-zero
-colSums(what_i_need[c(28,30,32)] != 0)
-what_i_need %>% mutate(jur_level_fst=rowSums(.[c(28,30,32)]!=0))
-what_i_need %>% mutate(jur_level_cntcen=rowSums(.[c(34,36)]!=0))
-what_i_need$actual_cntcen<-NA
-what_i_need$actual_cntcen[what_i_need$jur_level_cntcen>0]<-1
+#colSums(what_i_need[c(28,30,32)] != 0)
+what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(.[c(28,30,32)]!=0))
+what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
+what_i_need2$burn_actual_cntcen<-NA
+what_i_need2$burn_actual_cntcen[what_i_need2$burn_jur_level_cntcen>0]<-1
+what_i_need2$burn_actual_cntcen[is.na(what_i_need2$burn_actual_cntcen)]<-0
 
 
-what_i_need$jur_level_burn_cnt<-what_i_need$jur_level_fst+what_i_need$actual_cntcen
+what_i_need2$burn_jur_level_cnt<-what_i_need2$burn_jur_level_fst+what_i_need2$burn_actual_cntcen
 
 
 # do the same thing as burned but also for threatened
 
-
-#create the column of jurisdictional levels threatened 
-#if federal threat > 0 count
-#if state threat > 0 count
-#if trib threat >0 count
-#if cenpl/county threat > 0 count
-
+what_i_need3<-what_i_need2 %>% mutate(threat_jur_level_fst=rowSums(.[c(29,31,33)]!=0))
+what_i_need4<-what_i_need3 %>% mutate(threat_jur_level_cntcen=rowSums(.[c(35,37)]!=0))
+what_i_need4$threat_actual_cntcen<-NA
+what_i_need4$threat_actual_cntcen[what_i_need4$threat_jur_level_cntcen>0]<-1
+what_i_need4$threat_actual_cntcen[is.na(what_i_need4$threat_actual_cntcen)]<-0
 
 
+what_i_need4$threat_jur_level_cnt<-what_i_need4$threat_jur_level_fst+what_i_need4$threat_actual_cntcen
+
+#add start year back in
+getstartyr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
+incid_info<-merge(what_i_need4,getstartyr,all=TRUE)
+
+look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info$burn_jur_level_cnt==4,c("incident_id","START_YEAR","burn_jur_level_cnt","threat_jur_level_cnt")]
 
 
-write_sf(what_i_need,incid_count_area_mtbs_out)
+
+st_write(incid_info,incid_count_area_mtbs_out)#,append=FALSE)
