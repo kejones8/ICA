@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.
+```{r}
+library(sf)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+#read in data that has jur counts & pres/absence by event
+incid_info<-st_read(incid_count_area_mtbs_out)
+incid_info$geom<-NULL
+incid_info$X.x<-NULL
+incid_info$X.y<-NULL
+incid_df<-as.data.frame(incid_info)
+```
+
+
+
+```{r}
+
+uni_incid_info<-incid_df %>% distinct()
+df_fed<-uni_incid_info[,c("fed_burn_cnt","fed_threat_cnt"),]
+df_fed$level<-rep("federal",nrow(df_fed))
+df_trib<-uni_incid_info[,c("trib_burn_cnt","trib_threat_cnt"),]
+df_trib$level<-rep("tribal",nrow(df_trib))
+df_st<-uni_incid_info[,c("st_burn_count","st_threat_count"),]
+df_st$level<-rep("state",nrow(df_st))
+df_cnty<-uni_incid_info[,c("cnty_burn_count","cnty_threat_count"),]
+df_cnty$level<-rep("county",nrow(df_cnty))
+df_cenpl<-uni_incid_info[,c("cenpl_burn_count","cenpl_threat_count"),]
+df_cenpl$level<-rep("cenpl",nrow(df_cenpl))
+
+df_fed %>% 
+  pivot_longer(
+    c(fed_burn_cnt, fed_threat_cnt)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("Federal")
+
+df_trib %>% 
+  pivot_longer(
+    c(trib_burn_cnt, trib_threat_cnt)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("Tribal")
+
+df_st %>% 
+  pivot_longer(
+    c(st_burn_count, st_threat_count)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("State")
+
+df_cnty %>% 
+  pivot_longer(
+    c(cnty_burn_count, cnty_threat_count)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("County")
+
+df_cenpl %>% 
+  pivot_longer(
+    c(cenpl_burn_count, cenpl_threat_count)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("Census Place")
+
+```
+
+```{r}
+
+#see slide 5 (then slide 6) in figures google slide deck
+```
+

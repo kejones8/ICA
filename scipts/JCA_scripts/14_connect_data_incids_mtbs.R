@@ -45,26 +45,91 @@ what_i_need<-merge(incid_polys,tab_merged,by="incident_id")
 ####but not quite as many as i thought...makes sense cause counties out west are quite large, but
 ####still need to consider that county and cenpl consistently contribute more jurisdictions
 
+# 
+# #starting with jur_burned
+# hist(what_i_need$jur_burned)
+# hist(log(what_i_need$jur_burned))
+# hist(sqrt(what_i_need$jur_burned))
+# hist(what_i_need$jur_burned^(1/3))
+# 
+# #federal jurisdictions burned
+# hist(what_i_need$fed_burn_cnt)
+# hist(what_i_need$fed_threat_cnt)
 
-#starting with jur_burned
-hist(what_i_need$jur_burned)
-hist(log(what_i_need$jur_burned))
-hist(sqrt(what_i_need$jur_burned))
-hist(what_i_need$jur_burned^(1/3))
+library(tidyverse)
 
-#federal jurisdictions burned
-hist(what_i_need$fed_burn_cnt)
-#state jurisdictions burned
-hist(what_i_need$st_burn_count)
-#tribal jurisdictions burned
-hist(what_i_need$trib_burn_cnt)
-#county jurisdictions burned
-hist(what_i_need$cnty_burn_count)
-#county jurisdictions burned
-hist(what_i_need$cenpl_burn_count)
+df_fed<-what_i_need[,c("fed_burn_cnt","fed_threat_cnt"),]
+df_fed$level<-rep("federal",nrow(df_trib))
+df_trib<-what_i_need[,c("trib_burn_cnt","trib_threat_cnt"),]
+df_trib$level<-rep("tribal",nrow(df_trib))
+df_st<-what_i_need[,c("st_burn_count","st_threat_count"),]
+df_st$level<-rep("state",nrow(df_st))
+df_cnty<-what_i_need[,c("cnty_burn_count","cnty_threat_count"),]
+df_cnty$level<-rep("county",nrow(df_cnty))
+df_cenpl<-what_i_need[,c("cenpl_burn_count","cenpl_threat_count"),]
+df_cenpl$level<-rep("cenpl",nrow(df_cenpl))
+
+df_fed %>% 
+  pivot_longer(
+    c(fed_burn_cnt, fed_threat_cnt)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("Federal")
+
+df_trib %>% 
+  pivot_longer(
+    c(trib_burn_cnt, trib_threat_cnt)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("Tribal")
+
+df_st %>% 
+  pivot_longer(
+    c(st_burn_count, st_threat_count)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("State")
+
+df_cnty %>% 
+  pivot_longer(
+    c(cnty_burn_count, cnty_threat_count)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("County")
+
+df_cenpl %>% 
+  pivot_longer(
+    c(cenpl_burn_count, cenpl_threat_count)
+  ) %>% 
+  ggplot(aes(value, fill=name))+
+  geom_histogram(position = "dodge")+ggtitle("Census Place")
 
 
-hist(what_i_need$jur_threatened)
+#df <- data.frame(variable_x, variable_y, variable_z)
+#what_i_need_sel<-what_i_need[,c("incident_id","fed_burn_cnt","fed_threat_cnt","trib_burn_cnt","trib_threat_cnt","st_burn_count","st_threat_count","cnty_burn_count","cnty_threat_count","cenpl_burn_count","cenpl_threat_count")]
+#df <- melt(what_i_need_sel, id.vars='incident_id')
+#
+#df_fed<-df[df$variable %in% c("fed_burn_cnt","fed_threat_cnt"),]
+
+#df_fed %>%
+  # ggplot(aes(x=incident_id, y=value, fill=variable)) +
+  # geom_bar(stat='identity', position='dodge')
+# 
+# #state jurisdictions burned
+# hist(what_i_need$st_burn_count)
+# hist(what_i_need$st_threat_count)
+# #tribal jurisdictions burned
+# hist(what_i_need$trib_burn_cnt)
+# hist(what_i_need$trib_threat_cnt)
+# #county jurisdictions burned
+# hist(what_i_need$cnty_burn_count)
+# hist(what_i_need$cnty_threat_count)
+# #county jurisdictions burned
+# hist(what_i_need$cenpl_burn_count)
+# hist(what_i_need$cenpl_threat_count)
+# 
+# 
+# hist(what_i_need$jur_threatened)
 
 #create the column of jurisdictional levels burned 
 #if federal burned > 0 count
@@ -76,26 +141,36 @@ hist(what_i_need$jur_threatened)
 #don't want to sum the values, just want to tally that it's nonzero
 #want to do the same thing for county/cenpl, but across the two columns either or needs to be non-zero
 #colSums(what_i_need[c(28,30,32)] != 0)
-what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(.[c(28,30,32)]!=0))
-what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
+what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(select(., "fed_burn_cnt","st_burn_count","trib_burn_cnt")!=0))
+what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(select(., "cnty_burn_count","cenpl_burn_count")!=0))
+
+
+
+#what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
 what_i_need2$burn_actual_cntcen<-NA
 what_i_need2$burn_actual_cntcen[what_i_need2$burn_jur_level_cntcen>0]<-1
 what_i_need2$burn_actual_cntcen[is.na(what_i_need2$burn_actual_cntcen)]<-0
 
-
-what_i_need2$burn_jur_level_cnt<-what_i_need2$burn_jur_level_fst+what_i_need2$burn_actual_cntcen
+what_i_need2$burn_jur_level_cnt<-rowSums(what_i_need2[,c("burn_jur_level_fst", "burn_actual_cntcen")], na.rm=TRUE)
+#what_i_need2$burn_jur_level_cnt<-na.omit(what_i_need2$burn_jur_level_fst+what_i_need2$burn_actual_cntcen)
 
 
 # do the same thing as burned but also for threatened
 
-what_i_need3<-what_i_need2 %>% mutate(threat_jur_level_fst=rowSums(.[c(29,31,33)]!=0))
-what_i_need4<-what_i_need3 %>% mutate(threat_jur_level_cntcen=rowSums(.[c(35,37)]!=0))
+what_i_need3<-what_i_need2 %>% mutate(threat_jur_level_fst=rowSums(select(., "fed_threat_cnt","st_threat_count","trib_threat_cnt")!=0))
+what_i_need4<-what_i_need3 %>% mutate(threat_jur_level_cntcen=rowSums(select(., "cnty_threat_count","cenpl_threat_count")!=0))
+
+
+
+#what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
 what_i_need4$threat_actual_cntcen<-NA
 what_i_need4$threat_actual_cntcen[what_i_need4$threat_jur_level_cntcen>0]<-1
 what_i_need4$threat_actual_cntcen[is.na(what_i_need4$threat_actual_cntcen)]<-0
 
+what_i_need4$threat_jur_level_cnt<-rowSums(what_i_need4[,c("threat_jur_level_fst", "threat_actual_cntcen")], na.rm=TRUE)
+#what_i_need2$burn_jur_level_cnt<-na.omit(what_i_need2$burn_jur_level_fst+what_i_need2$burn_actual_cntcen)
 
-what_i_need4$threat_jur_level_cnt<-what_i_need4$threat_jur_level_fst+what_i_need4$threat_actual_cntcen
+#what_i_need4$threat_jur_level_cnt<-what_i_need4$threat_jur_level_fst+what_i_need4$threat_actual_cntcen
 
 #add start year back in
 getstartyr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
@@ -105,4 +180,5 @@ look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info
 
 
 
-st_write(incid_info,incid_count_area_mtbs_out)#,append=FALSE)
+st_write(incid_info,incid_count_area_mtbs_out,delete_layer=TRUE)#,append=FALSE)
+

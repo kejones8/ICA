@@ -37,17 +37,17 @@ st_crs(extent)<-st_crs(incid_data)
 
 #create extent/res of hexes
 #test_hex_100k <-st_make_grid(extent, c(100000,100000), what = "polygons", square = FALSE, flat_topped=TRUE)
-test_hex_25k <- st_make_grid(extent, c(25000,25000), what = "polygons", square = FALSE, flat_topped=TRUE)
+test_hex_100k <- st_make_grid(extent, c(100000,100000), what = "polygons", square = FALSE, flat_topped=TRUE)
 #test_hex_50k_proj<-st_transform(test_hex_50k,5070)
 #st_crs(test_hex_50k)<-st_crs(incid_polys_proj)
-st_crs(test_hex_25k)<-st_crs(incid_data)
+st_crs(test_hex_100k)<-st_crs(incid_data)
 
 # To sf and add grid ID
 #honeycomb_grid_sf = st_sf(test_hex_50k) %>%
-  honeycomb_grid_sf = st_sf(test_hex_25k) %>%
+  honeycomb_grid_sf = st_sf(test_hex_100k) %>%
   
   # add grid ID
-  mutate(grid_id = 1:length(lengths(test_hex_25k)))
+  mutate(grid_id = 1:length(lengths(test_hex_100k)))
 
 # count number of burned jurs in each cell
 # https://gis.stackexchange.com/questions/323698/counting-points-in-polygons-with-sf-package-of-r
@@ -78,7 +78,7 @@ st_crs(test_hex_25k)<-st_crs(incid_data)
   proc.time() - ptm
   
   #writes out a shapefile with all mtbs footprints and the surf management polygons they intersect
-  write_sf(hex_intersected,"K8_Chpt\\data_figures\\hex_withincidata_25k.shp",overwrite=TRUE)
+  write_sf(hex_intersected,"K8_Chpt\\data_figures\\hex_withincidata_100k.gpkg",overwrite=TRUE)
   
   
   #from geoms_int_hex, get which incid ids intersect each hex - think was is currently reported in geoms_int_hex 
@@ -94,19 +94,31 @@ st_crs(test_hex_25k)<-st_crs(incid_data)
   #honeycomb_grid_sf$counts <- 
   #need to get where hex_intersected only shows once incident id for every unique incident per grid cell
   uni_hex_inter<-hex_intersected[!duplicated(hex_intersected[ , c("incident_id", "grid_id")]), ]
+  #uni_hex_inter<-uni_hex_inter %>% group_by(grid_id) %>% mutate(burn_threat_count=(jur_burned+jur_threatened),num_inc=n_distinct(incident_id))
   uni_hex_inter<-uni_hex_inter %>% group_by(grid_id) %>% mutate(burn_threat_count=jur_burned+jur_threatened)
-  hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_burn_threat=sum(burn_threat_count),num_inc=n_distinct(incident_id))
-  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_burn_threat=sum(burn_threat_count))
-
-  hex_cum_jurcount$test_hex_25k<-NULL
-  hex_cum_jurcount$avg_jur<-hex_cum_jurcount$cum_jur_burn_threat/hex_cum_jurcount$num_inc
+  hex_cum_jurlev_count<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jurlev_burn=sum(burn_jur_level_cnt),num_inc=n_distinct(incident_id))
+  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jurlev_burn=sum(burn_jur_level_cnt),num_inc=n_distinct(incident_id))
   
-  spathex_withcounts<-merge(honeycomb_dointersect,hex_cum_jurcount,by="grid_id")
+  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_burn=sum(jur_burned),num_inc=n_distinct(incident_id))
+  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_threat=sum(jur_threatened),num_inc=n_distinct(incident_id))
+  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_cenpl=sum(cenpl_burn_count),num_inc=n_distinct(incident_id))
+  
+  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id,num_inc) %>% summarize(cum_jur_burn_threat=sum(burn_threat_count))
+  hex_cum_jurlev_count$test_hex_100k<-NULL
+  hex_cum_jurlev_count$avg_jurlev_count<-hex_cum_jurlev_count$cum_jurlev_burn/hex_cum_jurlev_count$num_inc
+  
+  # hex_cum_jurcount$test_hex_100k<-NULL
+  # hex_cum_jurcount$avg_jurlev_count<-hex_cum_jurcount$cum_jurlev_burn/hex_cum_jurcount$num_inc
+  
+  #spathex_withcounts<-merge(honeycomb_dointersect,hex_cum_jurcount,by="grid_id")
+  spathex_withcounts<-merge(honeycomb_dointersect,hex_cum_jurlev_count,by="grid_id")
+  
+
   
   # remove grid without value of 0 (i.e. no points in side that grid)
 #honeycomb_count = filter(hex_cum_jurcount, counts > 0)
 
-write_sf(spathex_withcounts,"K8_Chpt\\data_figures\\hex_cumjur_burnthreat_25k.shp",overwrite=TRUE)
+write_sf(spathex_withcounts,"K8_Chpt\\data_figures\\hex_avgjurlev_count_100k.shp",overwrite=TRUE)
 
 
 
