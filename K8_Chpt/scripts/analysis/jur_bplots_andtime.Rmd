@@ -24,15 +24,20 @@ incid_df<-as.data.frame(incid_info)
 ```{r}
 
 uni_incid_info<-incid_df %>% distinct()
-df_fed<-uni_incid_info[,c("fed_burn_cnt","fed_threat_cnt"),]
+#make NA's 0
+uni_incid_info[is.na(uni_incid_info)]<-0
+
+uni_incid_withdata<-uni_incid_info[uni_incid_info$burn_jur_level_cnt!=0,]
+
+df_fed<-uni_incid_withdata[,c("fed_burn_cnt","fed_threat_cnt"),]
 df_fed$level<-rep("federal",nrow(df_fed))
-df_trib<-uni_incid_info[,c("trib_burn_cnt","trib_threat_cnt"),]
+df_trib<-uni_incid_withdata[,c("trib_burn_cnt","trib_threat_cnt"),]
 df_trib$level<-rep("tribal",nrow(df_trib))
-df_st<-uni_incid_info[,c("st_burn_count","st_threat_count"),]
+df_st<-uni_incid_withdata[,c("st_burn_count","st_threat_count"),]
 df_st$level<-rep("state",nrow(df_st))
-df_cnty<-uni_incid_info[,c("cnty_burn_count","cnty_threat_count"),]
+df_cnty<-uni_incid_withdata[,c("cnty_burn_count","cnty_threat_count"),]
 df_cnty$level<-rep("county",nrow(df_cnty))
-df_cenpl<-uni_incid_info[,c("cenpl_burn_count","cenpl_threat_count"),]
+df_cenpl<-uni_incid_withdata[,c("cenpl_burn_count","cenpl_threat_count"),]
 df_cenpl$level<-rep("cenpl",nrow(df_cenpl))
 
 df_fed %>% 
@@ -74,6 +79,101 @@ df_cenpl %>%
 
 ```{r}
 
-#see slide 5 (then slide 6) in figures google slide deck
+#see slide 6 (then slide 7) in figures google slide deck
+
+# uni_incid_info$fed_burn_cnt[is.na(uni_incid_info$fed_burn_cnt)]<-0
+# uni_incid_info$trib_burn_cnt[is.na(uni_incid_info$trib_burn_cnt)]<-0
+# uni_incid_info$st_burn_count[is.na(uni_incid_info$st_burn_count)]<-0
+# uni_incid_info$burn_actual_cntcen[is.na(uni_incid_info$burn_actual_cntcen)]<-0
+
+#corresponding to slide 6, lets make a 0/1 either did or did not burn a jurisdictional level 
+#burnfed_yn_byyr<-uni_incid_withdata %>% group_by(START_YEAR)%>% summarize(inc_burn_fed=sum(fed_burn_cnt !=0),cnt_inc=n_distinct(incident_id))#,ratio_fed_burn=inc_burn_fed/cnt_inc)
+
+uni_incid_withdata$nonfed_burn_yn<-uni_incid_withdata$trib_burn_cnt+uni_incid_withdata$st_burn_count+uni_incid_withdata$burn_actual_cntcen #this isn't ctually the count, but it populated a 1 if either cp or county were burned
+
+#burnnonfed_yn_byyr<-uni_incid_withdata %>% group_by(START_YEAR) %>% summarize(inc_burn_nonfed =sum(nonfed_burn_yn !=0),cnt_inc=n_distinct(incident_id),ratio_nonfed_burn=inc_burn_nonfed/cnt_inc)
+
+uni_incid_withdata<-uni_incid_withdata %>% mutate(fed_nonfed_burn=rowSums(select(., "fed_burn_cnt","nonfed_burn_yn")!=0),fed_only=rowSums(select(., "nonfed_burn_yn")==0),nonfed_only=rowSums(select(., "fed_burn_cnt")==0))
+
+uni_incid_withdata$trueonlyfed<-NA
+uni_incid_withdata$trueonlyfed[uni_incid_withdata$fed_nonfed_burn==1 & uni_incid_withdata$fed_only!=0]<-1
+uni_incid_withdata$trueonlyfed[is.na(uni_incid_withdata$trueonlyfed)]<-0
+uni_incid_withdata$trueonlynonfed<-NA
+uni_incid_withdata$trueonlynonfed[uni_incid_withdata$fed_nonfed_burn==1 & uni_incid_withdata$nonfed_only!=0]<-1
+uni_incid_withdata$trueonlynonfed[is.na(uni_incid_withdata$trueonlynonfed)]<-0
+
+
+burnboth<-uni_incid_withdata %>% group_by(START_YEAR)%>% summarize(both=sum(fed_nonfed_burn ==2),count_inc=n_distinct(incident_id))
+burnfed<-uni_incid_withdata %>% group_by(START_YEAR)%>% summarize(fed=sum(trueonlyfed ==1))
+burnnonfed<-uni_incid_withdata %>% group_by(START_YEAR)%>% summarize(nonfed=sum(trueonlynonfed ==1))
+
+
+# byyr_burn_fedandnonfed<-uni_incid_withdata %>% group_by(START_YEAR) %>%  summarize(fed_nonfed_burn=rowSums(select(., "fed_burn_cnt","nonfed_burn_yn")==2))
+
+
+
+
+almost<-merge(burnboth,burnfed,by="START_YEAR")
+maybe<-merge(almost,burnnonfed,by="START_YEAR")
+maybe$perc_nonfed<-maybe$nonfed/maybe$count_inc
+maybe$perc_fed<-maybe$fed/maybe$count_inc
+maybe$perc_both<-maybe$both/maybe$count_inc
+
+
+mid_step<-maybe %>% 
+  pivot_longer(
+    c(perc_nonfed, perc_fed,perc_both)
+   )
+
+  ###SOMETHING IS UP WITH the end bars, looks like ti splits a year? 
+  # plot everything
+#ggplot(mid_step, aes(START_YEAR, value)) +   
+  #geom_bar(aes(fill = name), position = "dodge", stat="identity")+ggtitle("Percentage of Annual Fires that Burn #Federal,Non-Fed, or Both")+xlim(1999,2018)+theme(axis.text.x = element_text(angle = 45, size = 8))
+
+ggplot(mid_step, aes(fill=factor(name, levels=c("perc_fed","perc_nonfed","perc_both")), y=value, x=START_YEAR)) + 
+    geom_bar( position = position_fill(reverse = TRUE),stat="identity")+ ggtitle("Percentage of Annual Fires that Burn Federal,Non-Fed, or Both")
+
+
+
 ```
+
+
+```{r}
+#avg jurisdictional levels burned/threatened through time
+
+#count of incidents by year that burn 1,2,3,4
+burn_jur_lev<-uni_incid_withdata %>% group_by(START_YEAR)%>% summarize(one_jurlev=sum(burn_jur_level_cnt ==1),two_jurlev=sum(burn_jur_level_cnt ==2),three_jurlev=sum(burn_jur_level_cnt ==3),four_jurlev=sum(burn_jur_level_cnt ==4),inc_count=n_distinct(incident_id),perc_onelev=round(one_jurlev/inc_count,3),perc_twolev=round(two_jurlev/inc_count,3),perc_threelev=round(three_jurlev/inc_count,3),perc_fourlev=round(four_jurlev/inc_count,3))
+
+piv_long<-burn_jur_lev %>% 
+  pivot_longer(
+    #c(one_jurlev, two_jurlev,three_jurlev,four_jurlev)
+    c(perc_onelev,perc_twolev,perc_threelev,perc_fourlev)
+   )
+
+#count_inc<-uni_incid_info %>% group_by(START_YEAR) %>% summarize(inc_count=n_distinct(incident_id))
+
+ggplot(piv_long, aes(fill=factor(name, levels=c("perc_onelev","perc_twolev","perc_threelev","perc_fourlev")), y=value, x=START_YEAR)) + 
+    geom_bar( position = position_fill(reverse = TRUE),stat="identity")+ggtitle("Annual Percentage of Incidents Burning 1, 2, 3, or 4 Jurisdictional Levels")
+
+# bar<-ggplot(piv_long, aes(START_YEAR, value,name)) +   
+#   geom_bar(aes(fill = name), position = "dodge", stat="identity")+ggtitle("Annual Count of Fires Burning Jurisdictional Levels")+xlim(1999,2018)+theme(axis.text.x = element_text(angle = 45, size = 8))+
+#   geom_line(data=count_inc, aes(x=START_YEAR,y=inc_count,colour="black"))
+# 
+# bar
+
+# burn_jur_lev_incid_id<-uni_incid_withdata %>% mutate(one_jurlev=sum(burn_jur_level_cnt ==1),two_jurlev=sum(burn_jur_level_cnt ==2),three_jurlev=sum(burn_jur_level_cnt ==3),four_jurlev=sum(burn_jur_level_cnt==4))#,inc_count=n_distinct(incident_id),perc_onelev=round(one_jurlev/inc_count,3),perc_twolev=round(two_jurlev/inc_count,3),perc_threelev=round(three_jurlev/inc_count,3),perc_fourlev=round(four_jurlev/inc_count,3))
+# 
+
+
+```
+
+
+```{r}
+one_lev_burned<-uni_incid_withdata[uni_incid_withdata$burn_jur_level_cnt==1,]
+
+
+
+
+```
+
 
