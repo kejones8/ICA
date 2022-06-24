@@ -12,7 +12,7 @@ library(doParallel)
 
 
 #for now, read in just mtbs footprint data
-incid_polys<-read_sf(incid_multipolys)
+incid_polys<-read_sf(incid_multipolys)#,SHAPE_RESTORE_SHX=YES)
 incid_polys_proj<-st_transform(incid_polys,5070)
 colnames(incid_polys_proj)[1]<-"incident_id"
 #add start year
@@ -21,7 +21,8 @@ link_mtbs_incids<-read.csv(jca_samp_in)
 incid_start_yr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
 
 #read in count data
-counts<-as.data.frame(st_read(incid_count_area_mtbs_out))
+#counts<-as.data.frame(st_read(incid_count_area_mtbs_out))
+counts<-as.data.frame(st_read(incid_count_area_mtbs_out2))
 
 counts$geom<-NULL
 
@@ -79,7 +80,7 @@ st_crs(test_hex_100k)<-st_crs(incid_data)
   
   #writes out a shapefile with all mtbs footprints and the surf management polygons they intersect
   write_sf(hex_intersected,"K8_Chpt\\data_figures\\hex_withincidata_100k.gpkg",overwrite=TRUE)
-  
+
   
   #from geoms_int_hex, get which incid ids intersect each hex - think was is currently reported in geoms_int_hex 
   #is actually row number
@@ -95,23 +96,36 @@ st_crs(test_hex_100k)<-st_crs(incid_data)
   #need to get where hex_intersected only shows once incident id for every unique incident per grid cell
   uni_hex_inter<-hex_intersected[!duplicated(hex_intersected[ , c("incident_id", "grid_id")]), ]
   #uni_hex_inter<-uni_hex_inter %>% group_by(grid_id) %>% mutate(burn_threat_count=(jur_burned+jur_threatened),num_inc=n_distinct(incident_id))
-  uni_hex_inter<-uni_hex_inter %>% group_by(grid_id) %>% mutate(burn_threat_count=jur_burned+jur_threatened)
-  hex_cum_jurlev_count<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jurlev_burn=sum(burn_jur_level_cnt),num_inc=n_distinct(incident_id))
+  #uni_hex_inter<-uni_hex_inter %>% group_by(grid_id) %>% mutate(burn_threat_count=jur_burned+jur_threatened)
+  #uni_hex_inter<-uni_hex_inter %>% group_by(grid_id) %>% mutate(burn_juris_count=jur_burned)
+  #for 5 jur level 
+  hex_cum_jurlev_count<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jurlev_burn=sum(count_jurlev_burn),num_inc=n_distinct(incident_id))
+
+   
+  #for 4 jur level hex_cum_jurlev_count<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jurlev_burn=sum(burn_jur_level_cnt),num_inc=n_distinct(incident_id))
   #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jurlev_burn=sum(burn_jur_level_cnt),num_inc=n_distinct(incident_id))
   
-  #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_burn=sum(jur_burned),num_inc=n_distinct(incident_id))
+  hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_burn=sum(jur_burned),num_inc=n_distinct(incident_id))
   #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_threat=sum(jur_threatened),num_inc=n_distinct(incident_id))
   #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id) %>% summarize(cum_jur_cenpl=sum(cenpl_burn_count),num_inc=n_distinct(incident_id))
   
   #hex_cum_jurcount<-uni_hex_inter %>% group_by(grid_id,num_inc) %>% summarize(cum_jur_burn_threat=sum(burn_threat_count))
-  hex_cum_jurlev_count$test_hex_100k<-NULL
+  # hex_cum_jurlev_count$test_hex_100k<-NULL
+  # hex_cum_jurcount$test_hex_100k<-NULL
   hex_cum_jurlev_count$avg_jurlev_count<-hex_cum_jurlev_count$cum_jurlev_burn/hex_cum_jurlev_count$num_inc
+  hex_cum_jurcount$avg_jur_count<-hex_cum_jurcount$cum_jur_burn/hex_cum_jurcount$num_inc
+  
+  hex_cum_jurlev_count$test_hex_100k<-NULL
+  hex_cum_jurcount$test_hex_100k<-NULL
+  hex_cum_jurcount$num_inc.y<-NULL #getting rid of it cause dont need it
+  
+  hex_counts<-merge(hex_cum_jurlev_count,hex_cum_jurcount,by="grid_id")
   
   # hex_cum_jurcount$test_hex_100k<-NULL
   # hex_cum_jurcount$avg_jurlev_count<-hex_cum_jurcount$cum_jurlev_burn/hex_cum_jurcount$num_inc
   
   #spathex_withcounts<-merge(honeycomb_dointersect,hex_cum_jurcount,by="grid_id")
-  spathex_withcounts<-merge(honeycomb_dointersect,hex_cum_jurlev_count,by="grid_id")
+  spathex_withcounts<-merge(honeycomb_dointersect,hex_counts,by="grid_id")
   
 
   

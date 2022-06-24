@@ -17,6 +17,8 @@ mtbs_incid<-merge(link_mtbs_incids,mtbs_incid_proj,by.x="mtbs_ids",by.y="Event_I
 dim(mtbs_incid)
 
 write_sf(mtbs_incid,connect_mtbs_incids)
+# mtbs_incid<-read_sf(connect_mtbs_incids)
+# colnames(mtbs_incid)[3]<-"incident_id"
 
 #make geometries representative of whole incident id/all mtbs footprints
 incid_polys<-mtbs_incid %>%
@@ -144,7 +146,9 @@ df_cenpl %>%
 what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(select(., "fed_burn_cnt","st_burn_count","trib_burn_cnt")!=0))
 what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(select(., "cnty_burn_count","cenpl_burn_count")!=0))
 
+what_i_need_arealev<-what_i_need %>% mutate(burn_fed_lev=rowSums(select(.,"Federal_AcreBurn")!=0),burn_trib_lev=rowSums(select(.,"Tribal_AcreBurn")!=0),burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0))
 
+what_i_need_arealev$count_jurlev_burn<-what_i_need_arealev$burn_fed_lev+what_i_need_arealev$burn_trib_lev+what_i_need_arealev$burn_st_lev+what_i_need_arealev$burn_othloc_lev+what_i_need_arealev$burn_priv_lev
 
 #what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
 what_i_need2$burn_actual_cntcen<-NA
@@ -174,11 +178,14 @@ what_i_need4$threat_jur_level_cnt<-rowSums(what_i_need4[,c("threat_jur_level_fst
 
 #add start year back in
 getstartyr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
+
 incid_info<-merge(what_i_need4,getstartyr,all=TRUE)
+incid_info2<-merge(what_i_need_arealev,getstartyr,all=TRUE)
 
 look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info$burn_jur_level_cnt==4,c("incident_id","START_YEAR","burn_jur_level_cnt","threat_jur_level_cnt")]
 
 
 
-st_write(incid_info,incid_count_area_mtbs_out,delete_layer=TRUE)#,append=FALSE)
+#st_write(incid_info,incid_count_area_mtbs_out,delete_layer=TRUE)#,append=FALSE)
+st_write(incid_info2,incid_count_area_mtbs_out2,delete_layer=TRUE)#,append=FALSE)
 

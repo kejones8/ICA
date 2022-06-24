@@ -120,4 +120,5 @@ burn_threat_perc_area_tab_out<-"K8_Chpt\\data\\k8_areas_burn_threat_byjurislevel
 connect_mtbs_incids<-"K8_Chpt\\data\\k8_mtbs_incids.shp"
 incid_multipolys<-"K8_Chpt\\data\\k8_incids_multipoly.shp"
 incid_count_area_mtbs_out<-"K8_Chpt\\data\\k8_incids_mtbs_counts_areas2.gpkg"
+incid_count_area_mtbs_out2<-"K8_Chpt\\data\\k8_incids_mtbs_counts_areas_5lev.gpkg"
 

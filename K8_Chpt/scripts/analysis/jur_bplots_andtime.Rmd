@@ -12,16 +12,28 @@ library(ggplot2)
 library(tidyverse)
 library(dplyr)
 #read in data that has jur counts & pres/absence by event
-incid_info<-st_read(incid_count_area_mtbs_out)
-incid_info$geom<-NULL
-incid_info$X.x<-NULL
-incid_info$X.y<-NULL
-incid_df<-as.data.frame(incid_info)
+#incid_info<-st_read(incid_count_area_mtbs_out)
+#incid_count_area_mtbs_out2
+file<-file.choose()
+incid_info2<-read_sf(incid_count_area_mtbs_out2) #06/23 no idea why this alone isn't working
+incid_info2<-read_sf(file)
+
+# incid_info$geom<-NULL
+# incid_info$X.x<-NULL
+# incid_info$X.y<-NULL
+# incid_df<-as.data.frame(incid_info)
+
+incid_info2$geom<-NULL
+incid_info2$X.x<-NULL
+incid_info2$X.y<-NULL
+incid_df<-as.data.frame(incid_info2)
 ```
 
 
 
 ```{r}
+
+###4 jur levels - this chunk counts jurisdictions, not levels
 
 uni_incid_info<-incid_df %>% distinct()
 #make NA's 0
@@ -60,20 +72,6 @@ df_st %>%
   ) %>% 
   ggplot(aes(value, fill=name))+
   geom_histogram(position = "dodge")+ggtitle("State")
-
-df_cnty %>% 
-  pivot_longer(
-    c(cnty_burn_count, cnty_threat_count)
-  ) %>% 
-  ggplot(aes(value, fill=name))+
-  geom_histogram(position = "dodge")+ggtitle("County")
-
-df_cenpl %>% 
-  pivot_longer(
-    c(cenpl_burn_count, cenpl_threat_count)
-  ) %>% 
-  ggplot(aes(value, fill=name))+
-  geom_histogram(position = "dodge")+ggtitle("Census Place")
 
 ```
 
@@ -169,7 +167,40 @@ ggplot(piv_long, aes(fill=factor(name, levels=c("perc_onelev","perc_twolev","per
 
 
 ```{r}
-one_lev_burned<-uni_incid_withdata[uni_incid_withdata$burn_jur_level_cnt==1,]
+
+###5 jurisdictions!
+
+
+#count of incidents by year that burn 1,2,3,4
+burn_jur_lev<-uni_incid_withdata %>% group_by(START_YEAR)%>% summarize(one_jurlev=sum(count_jurlev_burn ==1),two_jurlev=sum(count_jurlev_burn ==2),three_jurlev=sum(count_jurlev_burn ==3),four_jurlev=sum(count_jurlev_burn ==4),five_jurlev=sum(count_jurlev_burn ==5),inc_count=n_distinct(incident_id),perc_onelev=round(one_jurlev/inc_count,3),perc_twolev=round(two_jurlev/inc_count,3),perc_threelev=round(three_jurlev/inc_count,3),perc_fourlev=round(four_jurlev/inc_count,3),perc_fivelev=round(five_jurlev/inc_count,3))
+
+piv_long<-burn_jur_lev %>% 
+  pivot_longer(
+    #c(one_jurlev, two_jurlev,three_jurlev,four_jurlev)
+    c(perc_onelev,perc_twolev,perc_threelev,perc_fourlev,perc_fivelev)
+   )
+
+#count_inc<-uni_incid_info %>% group_by(START_YEAR) %>% summarize(inc_count=n_distinct(incident_id))
+
+ggplot(piv_long, aes(fill=factor(name, levels=c("perc_onelev","perc_twolev","perc_threelev","perc_fourlev","perc_fivelev")), y=value, x=START_YEAR)) + 
+    geom_bar( position = position_fill(reverse = TRUE),stat="identity")+
+    #geom_bar(stat="identity")+
+    scale_fill_manual(values=c("purple",
+                             "royal blue",
+                             "light blue",
+                             "lime green",
+                             "yellow"))+ 
+  ggtitle("Annual Percentage of Incidents Burning 1, 2, 3, 4, or 5 Jurisdictional Levels")
+
+# bar<-ggplot(piv_long, aes(START_YEAR, value,name)) +   
+#   geom_bar(aes(fill = name), position = "dodge", stat="identity")+ggtitle("Annual Count of Fires Burning Jurisdictional Levels")+xlim(1999,2018)+theme(axis.text.x = element_text(angle = 45, size = 8))+
+#   geom_line(data=count_inc, aes(x=START_YEAR,y=inc_count,colour="black"))
+# 
+# bar
+
+# burn_jur_lev_incid_id<-uni_incid_withdata %>% mutate(one_jurlev=sum(burn_jur_level_cnt ==1),two_jurlev=sum(burn_jur_level_cnt ==2),three_jurlev=sum(burn_jur_level_cnt ==3),four_jurlev=sum(burn_jur_level_cnt==4))#,inc_count=n_distinct(incident_id),perc_onelev=round(one_jurlev/inc_count,3),perc_twolev=round(two_jurlev/inc_count,3),perc_threelev=round(three_jurlev/inc_count,3),perc_fourlev=round(four_jurlev/inc_count,3))
+# 
+
 
 
 
