@@ -1,3 +1,4 @@
+library(tidyverse)
 #this script takes outputs of 05b and removes the information we don't want to be consdiering for 
 #individual jurisidcitions eitehr because it is not relevant or it is being replaced by "jurisdictions" 
 #created in some other script
@@ -187,9 +188,9 @@ usfs_threat<-fed_threat_burnrm%>% filter(JrsdcUA=="USFS")
 # 
 # usfs_count_threat<-countthese_usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
 
-usfs_count_burn<-usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+usfs_count_burn<-usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN))
 
-usfs_count_threat<-usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+usfs_count_threat<-usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN))
 
 write.csv(usfs_count_burn,usfs_burn_count_out)
 write.csv(usfs_count_threat,usfs_threat_count_out)

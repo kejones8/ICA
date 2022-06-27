@@ -88,12 +88,18 @@ print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
 
+toconnectincandmtbs<-read_sf(burn_surfman_inter_out)
+
+whatitdo_burn<-merge(toconnectincandmtbs,mtbs_withincid,by.x="Event_ID","mtbs_ids")
+
+write_sf(whatitdo_burn,burn_surfman_inter_out,overwrite=TRUE)
+
 #writes out a shapefile with all mtbs footprints and the surf management polygons they intersect
-write_sf(burn_intersected,burn_surfman_inter_out,overwrite=TRUE)
+#write_sf(burn_intersected,burn_surfman_inter_out,overwrite=TRUE)
 
 #now want to join this with a list of mtbsids by INCIDENT_IDs
 #this links all jurisdictional data to INCIDENT_ID
-whatitdo_burn<-merge(burn_intersected,mtbs_withincid,by.x="Event_ID","mtbs_ids")
+#whatitdo_burn<-merge(burn_intersected,mtbs_withincid,by.x="Event_ID","mtbs_ids")
 
 #grab the columns we need for jurisdictional work 
 burn_inter_trimmed<-whatitdo_burn[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","burn_inter")]
@@ -128,13 +134,17 @@ print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
 
+whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
+
+#threat_intersected<-read_sf(threat_surfman_inter_out)
 #write out all surfman polygons intersected wtih individual threatened areas
-write_sf(threat_intersected,threat_surfman_inter_out,overwrite=TRUE)
+write_sf(whatitdo_threat,threat_surfman_inter_out,overwrite=TRUE)
+#threat_intersected<-read_sf(threat_surfman_inter_out)
 threat_intersected<-read_sf(threat_surfman_inter_out)
 
 #now want to join this with a list of mtbsids by INCIDENT_IDs
 #this links all jurisdictional data to INCIDENT_IDbove
-whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
+#whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
 
 #same steps as above with burned data
 threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Evnt_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","brn_ntr","thrt_nt")]

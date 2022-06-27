@@ -61,7 +61,7 @@ what_i_need<-merge(incid_polys,tab_merged,by="incident_id")
 library(tidyverse)
 
 df_fed<-what_i_need[,c("fed_burn_cnt","fed_threat_cnt"),]
-df_fed$level<-rep("federal",nrow(df_trib))
+df_fed$level<-rep("federal",nrow(df_fed))
 df_trib<-what_i_need[,c("trib_burn_cnt","trib_threat_cnt"),]
 df_trib$level<-rep("tribal",nrow(df_trib))
 df_st<-what_i_need[,c("st_burn_count","st_threat_count"),]
@@ -143,35 +143,41 @@ df_cenpl %>%
 #don't want to sum the values, just want to tally that it's nonzero
 #want to do the same thing for county/cenpl, but across the two columns either or needs to be non-zero
 #colSums(what_i_need[c(28,30,32)] != 0)
-what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(select(., "fed_burn_cnt","st_burn_count","trib_burn_cnt")!=0))
-what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(select(., "cnty_burn_count","cenpl_burn_count")!=0))
+#what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(select(., "fed_burn_cnt","st_burn_count","trib_burn_cnt")!=0))
+#commented this line out because not using county & cenpl for levels anymore
+#what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(select(., "cnty_burn_count","cenpl_burn_count")!=0))
+what_i_need$burn_jur_count<-what_i_need$fed_burn_cnt+what_i_need$trib_burn_cnt+what_i_need$st_burn_count+what_i_need$cnty_burn_count+what_i_need$cenpl_burn_count
+what_i_need$threat_jur_count<-what_i_need$fed_threat_cnt+what_i_need$trib_threat_cnt+what_i_need$st_threat_count+what_i_need$cnty_threat_count+what_i_need$cenpl_threat_count
 
-what_i_need_arealev<-what_i_need %>% mutate(burn_fed_lev=rowSums(select(.,"Federal_AcreBurn")!=0),burn_trib_lev=rowSums(select(.,"Tribal_AcreBurn")!=0),burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0))
+what_i_need2<-what_i_need %>% mutate(burn_fed_lev=rowSums(select(.,"Federal_AcreBurn")!=0),burn_trib_lev=rowSums(select(.,"Tribal_AcreBurn")!=0),burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
+                                            threat_fed_lev=rowSums(select(.,"Federal_AcreThreat")!=0),threat_trib_lev=rowSums(select(.,"Tribal_AcreThreat")!=0),threat_st_lev=rowSums(select(.,"State_AcreThreat")!=0),threat_othloc_lev=rowSums(select(.,"Other_AcreThreat")!=0),threat_priv_lev=rowSums(select(.,"Private_AcreThreat")!=0))
 
-what_i_need_arealev$count_jurlev_burn<-what_i_need_arealev$burn_fed_lev+what_i_need_arealev$burn_trib_lev+what_i_need_arealev$burn_st_lev+what_i_need_arealev$burn_othloc_lev+what_i_need_arealev$burn_priv_lev
+what_i_need2$count_jurlev_burn<-what_i_need2$burn_fed_lev+what_i_need2$burn_trib_lev+what_i_need2$burn_st_lev+what_i_need2$burn_othloc_lev+what_i_need2$burn_priv_lev
+what_i_need2$count_jurlev_threat<-what_i_need2$threat_fed_lev+what_i_need2$threat_trib_lev+what_i_need2$threat_st_lev+what_i_need2$threat_othloc_lev+what_i_need2$threat_priv_lev
+
 
 #what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
-what_i_need2$burn_actual_cntcen<-NA
-what_i_need2$burn_actual_cntcen[what_i_need2$burn_jur_level_cntcen>0]<-1
-what_i_need2$burn_actual_cntcen[is.na(what_i_need2$burn_actual_cntcen)]<-0
+# what_i_need2$burn_actual_cntcen<-NA
+# what_i_need2$burn_actual_cntcen[what_i_need2$burn_jur_level_cntcen>0]<-1
+# what_i_need2$burn_actual_cntcen[is.na(what_i_need2$burn_actual_cntcen)]<-0
 
-what_i_need2$burn_jur_level_cnt<-rowSums(what_i_need2[,c("burn_jur_level_fst", "burn_actual_cntcen")], na.rm=TRUE)
+#what_i_need2$burn_jur_level_cnt<-rowSums(what_i_need2[,c("burn_jur_level_fst", "burn_actual_cntcen")], na.rm=TRUE)
 #what_i_need2$burn_jur_level_cnt<-na.omit(what_i_need2$burn_jur_level_fst+what_i_need2$burn_actual_cntcen)
 
 
 # do the same thing as burned but also for threatened
 
-what_i_need3<-what_i_need2 %>% mutate(threat_jur_level_fst=rowSums(select(., "fed_threat_cnt","st_threat_count","trib_threat_cnt")!=0))
-what_i_need4<-what_i_need3 %>% mutate(threat_jur_level_cntcen=rowSums(select(., "cnty_threat_count","cenpl_threat_count")!=0))
+#what_i_need3<-what_i_need2 %>% mutate(threat_jur_level_fst=rowSums(select(., "fed_threat_cnt","st_threat_count","trib_threat_cnt")!=0))
+#what_i_need4<-what_i_need3 %>% mutate(threat_jur_level_cntcen=rowSums(select(., "cnty_threat_count","cenpl_threat_count")!=0))
 
 
 
 #what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
-what_i_need4$threat_actual_cntcen<-NA
-what_i_need4$threat_actual_cntcen[what_i_need4$threat_jur_level_cntcen>0]<-1
-what_i_need4$threat_actual_cntcen[is.na(what_i_need4$threat_actual_cntcen)]<-0
-
-what_i_need4$threat_jur_level_cnt<-rowSums(what_i_need4[,c("threat_jur_level_fst", "threat_actual_cntcen")], na.rm=TRUE)
+# what_i_need4$threat_actual_cntcen<-NA
+# what_i_need4$threat_actual_cntcen[what_i_need4$threat_jur_level_cntcen>0]<-1
+# what_i_need4$threat_actual_cntcen[is.na(what_i_need4$threat_actual_cntcen)]<-0
+# 
+# what_i_need4$threat_jur_level_cnt<-rowSums(what_i_need4[,c("threat_jur_level_fst", "threat_actual_cntcen")], na.rm=TRUE)
 #what_i_need2$burn_jur_level_cnt<-na.omit(what_i_need2$burn_jur_level_fst+what_i_need2$burn_actual_cntcen)
 
 #what_i_need4$threat_jur_level_cnt<-what_i_need4$threat_jur_level_fst+what_i_need4$threat_actual_cntcen
@@ -179,13 +185,16 @@ what_i_need4$threat_jur_level_cnt<-rowSums(what_i_need4[,c("threat_jur_level_fst
 #add start year back in
 getstartyr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
 
-incid_info<-merge(what_i_need4,getstartyr,all=TRUE)
-incid_info2<-merge(what_i_need_arealev,getstartyr,all=TRUE)
+#incid_info<-merge(what_i_need,what_i_need_arealev,by="incident_id",all=TRUE)
+incid_info<-merge(what_i_need2,getstartyr,all=TRUE,by="incident_id")
 
-look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info$burn_jur_level_cnt==4,c("incident_id","START_YEAR","burn_jur_level_cnt","threat_jur_level_cnt")]
+#look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info$burn_jur_level_cnt==4,c("incident_id","START_YEAR","burn_jur_level_cnt","threat_jur_level_cnt")]
 
+incid_info$X.x<-NULL
+incid_info$X.y<-NULL
 
+incid_info_nodup<-incid_info[!duplicated(incid_info$incident_id),]
 
 #st_write(incid_info,incid_count_area_mtbs_out,delete_layer=TRUE)#,append=FALSE)
-st_write(incid_info2,incid_count_area_mtbs_out2,delete_layer=TRUE)#,append=FALSE)
+st_write(incid_info_nodup,incid_count_area_mtbs_out2,delete_layer=TRUE)#,append=FALSE)
 

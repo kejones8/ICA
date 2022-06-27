@@ -7,9 +7,8 @@ library(stringr)
 library(tidyverse)
 
 
-calc_areas<-function (uni_incids,nonemptygeoms,burn_or_threatcols_perc,burn_or_threatcols_acre){
-  
 
+calc_areas<-function (uni_incids,nonemptygeoms,burn_or_threatcols_perc,burn_or_threatcols_acre){
   
   
   # nonemptygeoms<-nonemptygeoms_burn
@@ -17,7 +16,9 @@ calc_areas<-function (uni_incids,nonemptygeoms,burn_or_threatcols_perc,burn_or_t
   colnames(nonemptygeoms)[1]<-"Event_ID"
   
   nonemptygeoms_sel<-nonemptygeoms[,c("Event_ID","incident_id","area_cat")]
-  put_calcs_here<-data.frame()
+  put_calcs_here_rbind<-data.frame()
+  put_calcs_perc<-data.frame()
+  put_calcs_acre<-data.frame()
   
 count=0
 
@@ -26,6 +27,7 @@ for (i in uni_incids){
   count=count+1 
   print(count)
   print(i)
+  put_calcs_here<-data.frame()
   #was originally doing it by MTBS id to test the method
   #test_grouped_areas<-merged_inter_groupedjur[merged_inter_groupedjur$FIRE_ID=="WA4805112011320150814",]
   #now incident id for the correct calculations
@@ -136,32 +138,152 @@ for (i in uni_incids){
   # p_buf@data$areathreatened_acres<-round(p_buf@data$area * 0.000247105) #convert from sq. m. to acres 
   # 
   # print("calc & assign acres aff & threat")
+  # put_calcs_here<-p@data
+  # put_calcs_here$jur_group<-as.factor(put_calcs_here$jur_group)
+  p@data$jur_group<-as.factor(p@data$jur_group)
+  put_calcs_here<-p@data
+  put_calcs_here$jur_group<-as.factor(put_calcs_here$jur_group)
   
-  put_calcs_here<-rbind(put_calcs_here,p@data)
+  put_calcs_here_rbind<-rbind(put_calcs_here_rbind,p@data)
   #where_to_put_it_buf<-rbind(where_to_put_it_buf,p_buf@data)
   print("rbind new data, on to the next incident")
   
-  ##at this point, need to have NA's or 0's represented for each category...
-  ## or could process both the tables & add it in after the fact based on incident_id?
-  #print(put_calcs_here)
   
+  #put_calcs_here$jur_group_fac<-as.factor(put_calcs_here$jur_group)
+  
+  
+  wut_reg_perc<-put_calcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
+  wut_reg_acre<-put_calcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% summarize(jur_group_burnacres=sum(areaburned_acres))
+  
+  wide_reg_perc<-as.data.frame(tidyr::pivot_wider(wut_reg_perc, names_from = jur_group, values_from = jur_group_burnperc))
+  wide_reg_acre<-as.data.frame(tidyr::pivot_wider(wut_reg_acre, names_from = jur_group, values_from = jur_group_burnacres))
+  
+  print ("made wide stuff")
+  
+  if (is.null(wide_reg_perc$fed)) {
+    wide_reg_perc$fed<-0
+    wide_reg_acre$fed<-0
+  } else {
+    print("fed col there")
+  }
+  
+  if (is.null(wide_reg_perc$trib)) {
+    wide_reg_perc$trib<-0
+    wide_reg_acre$trib<-0
+    
+  } else {
+    print("trib col there")
+  }
+  
+  
+  if (is.null(wide_reg_perc$state)) {
+    wide_reg_perc$state<-0
+    wide_reg_acre$state<-0
+    
+  } else {
+    print("state col there")
+  }
+  
+  if (is.null(wide_reg_perc$loc)) {
+    wide_reg_perc$loc<-0
+    wide_reg_acre$loc<-0
+    
+  } else {
+    print("loc col there")
+  }
+  
+  if (is.null(wide_reg_perc$priv)) {
+    wide_reg_perc$priv<-0
+    wide_reg_acre$priv<-0
+    
+  } else {
+    print("priv col there")
+  }
+  
+  print("added cols as needed")
+
+  wide_perc_order<-wide_reg_perc[,c("incident_id","fed","loc","priv","state","trib")]
+  wide_acre_order<-wide_reg_acre[,c("incident_id","fed","loc","priv","state","trib")]
+  
+  print ("renamed cols")
+  
+  put_calcs_acre<-rbind(put_calcs_acre,wide_acre_order)
+  put_calcs_perc<-rbind(put_calcs_perc,wide_perc_order)
+  
+  print("successfully added new records, now onto next incident")
+  print(put_calcs_here)
+  print(put_calcs_acre)
+  print(put_calcs_perc)
 }
 #return(put_calcs_here)
-put_calcs_here$jur_group_fac<-as.factor(put_calcs_here$jur_group)
+#put_calcs_here$jur_group_fac<-as.factor(put_calcs_here$jur_group)
 #return(put_calcs_here)
 
-wut_reg_perc<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
-wut_reg_acre<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnacres=sum(areaburned_acres))
+# wut_reg_perc<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
+# wut_reg_acre<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnacres=sum(areaburned_acres))
+# 
+# wide_reg_perc<-as.data.frame(tidyr::pivot_wider(wut_reg_perc, names_from = jur_group_fac, values_from = jur_group_burnperc))
+# wide_reg_acre<-as.data.frame(tidyr::pivot_wider(wut_reg_acre, names_from = jur_group_fac, values_from = jur_group_burnacres))
 
-wide_reg_perc<-tidyr::pivot_wider(wut_reg_perc, names_from = jur_group_fac, values_from = jur_group_burnperc)
-wide_reg_acre<-tidyr::pivot_wider(wut_reg_acre, names_from = jur_group_fac, values_from = jur_group_burnacres)
+##at this point, need to have NA's or 0's represented for each category...
+## or could process both the tables & add it in after the fact based on incident_id?
+#print(put_calcs_here)
+# 
+# if (is.null(wide_reg_perc$fed)) {
+#   wide_reg_perc$fed<-0
+#   wide_reg_acre$fed<-0
+# } else {
+#   print("fed col there")
+# }
+# 
+# if (is.null(wide_reg_perc$trib)) {
+#   wide_reg_perc$trib<-0
+#   wide_reg_acre$trib<-0
+#   
+# } else {
+#   print("trib col there")
+# }
+# 
+# 
+# if (is.null(wide_reg_perc$state)) {
+#   wide_reg_perc$state<-0
+#   wide_reg_acre$state<-0
+#   
+# } else {
+#   print("state col there")
+# }
+# 
+# if (is.null(wide_reg_perc$loc)) {
+#   wide_reg_perc$loc<-0
+#   wide_reg_acre$loc<-0
+#   
+# } else {
+#   print("loc col there")
+# }
+# 
+# if (is.null(wide_reg_perc$priv)) {
+#   wide_reg_perc$priv<-0
+#   wide_reg_acre$priv<-0
+#   
+# } else {
+#   print("priv col there")
+# }
+
+
 
 ###need a way to insert these colnames based on threatened/burned running
-#pass them in as argument
-colnames(wide_reg_perc)<-burn_or_threatcols_perc
-colnames(wide_reg_acre)<-burn_or_threatcols_acre
+#ORDER THE COLUMNS ADDED OR EXISTING
+# wide_perc_order<-wide_reg_perc[,c("incident_id","fed","loc","priv","state","trib")]
+# wide_acre_order<-wide_reg_acre[,c("incident_id","fed","loc","priv","state","trib")]
 
-perc_area<-merge(wide_reg_perc,wide_reg_acre,by="incident_id",all=TRUE)
+#pass them in as argument
+#colnames(wide_perc_order)<-burn_or_threatcols_perc
+#colnames(wide_acre_order)<-burn_or_threatcols_acre
+
+colnames(put_calcs_perc)<-burn_or_threatcols_perc
+colnames(put_calcs_acre)<-burn_or_threatcols_acre
+
+perc_area<-merge(put_calcs_perc,put_calcs_acre,by="incident_id",all=TRUE)
 return(perc_area)
 
 #return(wide_reg)

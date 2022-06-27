@@ -28,7 +28,7 @@ local<-c("City","County","OthLoc")
 priv<-c("CenPriv")
 
 #merge mtbs_ids & incident_ids
-burn_surfman_incid<-merge(burn_surfman,mysamp,by.x="Event_ID",by.y="mtbs_ids",all=TRUE)
+burn_surfman_incid<-merge(burn_surfman,mysamp,by.x="Evnt_ID",by.y="mtbs_ids",all=TRUE)
 threat_surfman_incid<-merge(threat_surfman,mysamp,by.x="Evnt_ID",by.y="mtbs_ids",all=TRUE)#note column name change
 
 
@@ -65,6 +65,7 @@ threat_surfman_incid[st_is_empty(threat_surfman_incid),]
 
 #unique incident_ids burned
 burn_uni_incid<-unique(nonemptygeoms_burn$incident_id)
+threat_uni_incid<-unique(nonemptygeoms_burn$incident_id)
 
 #to get unique incident_ids for threatened, want to remove any incident_ids where zero jurisdictions were threatened
 #read in final jur table & sort on 0 jur_threatened
@@ -75,7 +76,7 @@ burn_uni_incid<-unique(nonemptygeoms_burn$incident_id)
 #make function out of the operations below, store in another script
 #then call in for threatened & burned separately!
 jur_counts<-read.csv(final_out)
-threat_uni_incid<-jur_counts$incident_id[jur_counts$jur_threatened!=0]
+#threat_uni_incid<-jur_counts$incident_id[jur_counts$jur_threatened!=0]
 
 
 #colnames to pass as argument to 13_area_calc_func
@@ -88,6 +89,13 @@ threat_acre_colnames<-c("incident_id","Federal_AcreThreat","Other_AcreThreat","P
 #jur_areas_vars are paths from 00_K8s_paths.R
 burned_areas_tab<-calc_areas(burn_uni_incid,nonemptygeoms_burn,burn_perc_colnames,burn_acre_colnames)
 threat_areas_tab<-calc_areas(threat_uni_incid,nonemptygeoms_threat,threat_perc_colnames,threat_acre_colnames)
+#threat_jump<-calc_areas("1999_AZ-ASD-C142_JUMP COMPLEX",jump_threat,threat_perc_colnames,threat_acre_colnames)
+#threat_rainbow<-calc_areas("1999_AZ-FTA-172_RAINBOW",rb_threat,threat_perc_colnames,threat_acre_colnames)
+
+#jump_rb_br_threat_out<-calc_areas(c("1999_AZ-ASD-C142_JUMP COMPLEX","1999_AZ-FTA-172_RAINBOW","1999_AR-BUP-99025_BUFFALO RIVER COMPLEX"),jump_rb_br_threat,threat_perc_colnames,threat_acre_colnames)
+
+
+#burn_rainbow<-calc_areas("1999_AZ-FTA-172_RAINBOW",rb_burn,burn_perc_colnames,burn_acre_colnames)
 
 burn_threat_perc_area_tab<-merge(burned_areas_tab,threat_areas_tab,by="incident_id",all=TRUE)
 
