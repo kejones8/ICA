@@ -12,7 +12,7 @@ length(unique(sitreps$INCIDENT_ID))
 #check fire use types - we only care about wildfires
 unique(incidents$INCTYP_ABBREVIATION)
 #get just the wildfires
-wf_inc<-incidents[incidents$INCTYP_ABBREVIATION %in% c("WF","WFU"),]
+wf_inc<-incidents[incidents$INCTYP_ABBREVIATION %in% c("WF","WFU","CX"),]
 #see how it reduces dataset 
 length(wf_inc$INCIDENT_ID)
 
@@ -75,5 +75,5 @@ type12_wf_inc$LNGTH_FIRE_DAYS[type12_wf_inc$LNGTH_FIRE_DAYS < 0] <- type12_wf_in
 
 type12_wf_inc$LNGTH_FIRE_DAYS[type12_wf_inc$LNGTH_FIRE_DAYS < 0,] <- type12_wf_inc$LNGTH_FIRE_DAYS + 365
 
-type12_wf_inc$LNGTH_FIRE_DAYS<-if(type12_wf_inc$LNGTH_FIRE_DAYS<0,type12_wf_inc$LNGTH_FIRE_DAYS+365,)
+type12_wf_inc$LNGTH_FIRE_DAYS<-if(type12_wf_inc$LNGTH_FIRE_DAYS<0,type12_wf_inc$LNGTH_FIRE_DAYS+365)
 hist(type12_wf_inc$LNGTH_FIRE_DAYS,breaks=100)
