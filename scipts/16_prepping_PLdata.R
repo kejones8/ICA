@@ -1,15 +1,16 @@
 #library(tidyverse)
 library(reshape)
 library(stringr)
-require(tidyverse)
+library(tidyverse)
+library(anytime)
 
 #read in PL data with no header
-pl<-read.csv("C:\\Users\\thebrain\\Dropbox\\FireChasers\\new\\raw_data\\pl_data.csv",header=FALSE)
+pl<-read.csv("data\\raw_pl_data.csv",header=FALSE)
 #correct first row,col
 pl[1,1]<-"January"
 
 #using this in place of subinc & comp below
-incidents<-read.csv("C:\\Users\\thebrain\\Dropbox\\FireChasers\\new\\data\\Incident_records\\incidents_99_18.csv")
+incidents<-read.csv("oursample.csv")
 
 #read in incident data
 # subinc<-read.csv("C:/Users/thebrain/Dropbox/FireChasers/new/data/Incident_records/subinc_affected_jur.csv",header=TRUE)
@@ -66,14 +67,14 @@ long_form_num_mnth$Y_M_D<-paste0(long_form_num_mnth$Year,long_form_num_mnth$Mont
 ##then tabulate the max pl within that window of dates and the # of days at 5,4,3,2,1
 
 #get only the columns from the incident df that we need to do the PL tabulations
-inc_withdates<-as.data.frame(cbind(incidents$INCIDENT_ID,incidents$DISCOVERY_DATE,incidents$REPORT_TO_DATE,incidents$YEAR))
+inc_withdates<-as.data.frame(cbind(incidents$INCIDENT_ID,incidents$DISCOVERY_DATE,incidents$FINAL_REPORT_DATE,incidents$START_YEAR))
 
 #condense to single row per incident
 uni_inc_withdates<-unique(inc_withdates)
-colnames(uni_inc_withdates)<-c("INCIDENT_ID","DISCOVERY_DATE","REPORT_TO_DATE","Year")
+colnames(uni_inc_withdates)<-c("INCIDENT_ID","DISCOVERY_DATE","FINAL_REPORT_DATE","START_YEAR")
 
 uni_inc_withdates$DISCOVERY_DATE<-as.character(uni_inc_withdates$DISCOVERY_DATE)
-uni_inc_withdates$REPORT_TO_DATE<-as.character(uni_inc_withdates$REPORT_TO_DATE)
+uni_inc_withdates$REPORT_TO_DATE<-as.character(uni_inc_withdates$FINAL_REPORT_DATE)
 
 
 # new_df<-data.frame()
@@ -176,7 +177,9 @@ join_toinc_leveltable<-reshape(test, idvar = "INCIDENT_ID", timevar = "PL", dire
 
 
 colnames(join_toinc_leveltable)<-c("INCIDENT_ID","Days_PL1","Days_PL2","Days_PL3","Days_PL4","Days_PL5")
+join_toinc_leveltable[is.na(join_toinc_leveltable)]<-0
 
+pl_stuff<-merge(join_toinc_leveltable,incidents_withmaxPL,by="INCIDENT_ID")
 
-write.csv(join_toinc_leveltable,"pl_data_joinwithincleveltable_0827.csv")
-write.csv(incidents_withmaxPL,"pl_data_maxPL_0827.csv")
+write.csv(pl_stuff,"data\\pl_daysat_max.csv")
+#write.csv(incidents_withmaxPL,"pl_data_maxPL_0827.csv")

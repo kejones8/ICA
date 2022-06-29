@@ -2,6 +2,7 @@
 #need to connect each incident_id to the mtbs_ids and be able to map attributes for each incident_id
 library(sf)
 library(dplyr)
+`%notin%` <- Negate(`%in%`)
 
 #read in mtbs footprints in sample - don't think I need to represent threatened extent spatially
 #because all attributes are technically tied to the single incident, which is represented as the burned boudnary
@@ -41,6 +42,47 @@ tab_merged<-merge(jur_counts,jur_area,by="incident_id",all=TRUE)
 #merge it all together
 what_i_need<-merge(incid_polys,tab_merged,by="incident_id")
 
+#after making changes from burn - threat to burn - engage need to restructure and name many coluns 
+what_i_need$X.x<-NULL
+what_i_need$X.y<-NULL
+what_i_need$fed_engag_cnt<-what_i_need$fed_burn_cnt+what_i_need$fed_threat_cnt
+what_i_need$fed_threat_cnt<-NULL
+what_i_need$trib_engag_cnt<-what_i_need$trib_burn_cnt+what_i_need$trib_threat_cnt
+what_i_need$trib_threat_cnt<-NULL
+what_i_need$st_engag_cnt<-what_i_need$st_burn_count+what_i_need$st_threat_count
+what_i_need$st_threat_count<-NULL
+names(what_i_need)[names(what_i_need)=="st_burn_count"]<-"st_burn_cnt"
+what_i_need$cnty_engag_cnt<-what_i_need$cnty_burn_count+what_i_need$cnty_threat_count
+what_i_need$cnty_threat_count<-NULL
+names(what_i_need)[names(what_i_need)=="cnty_burn_count"]<-"cnty_burn_cnt"
+what_i_need$cenpl_engag_cnt<-what_i_need$cenpl_burn_count+what_i_need$cenpl_threat_count
+what_i_need$cenpl_threat_count<-NULL
+names(what_i_need)[names(what_i_need)=="cenpl_burn_count"]<-"cenpl_burn_cnt"
+what_i_need$gacc_engag_cnt<-what_i_need$gacc_burn_count+what_i_need$gacc_threat_count
+what_i_need$gacc_threat_count<-NULL
+
+
+what_i_need$alljur_engag_cnt<-sum(what_i_need$jur_burned,what_i_need$fed_engag_cnt,what_i_need$trib_engag_cnt,what_i_need$st_engag_cnt,what_i_need$cnty_engag_cnt,what_i_need$cenpl_engag_cnt)
+what_i_need$jur_threatened<-NULL
+names(what_i_need)[names(what_i_need)=="jur_burned"]<-"alljur_burn_cnt"
+names(what_i_need)[names(what_i_need)=="total_ac_burn"]<-"total_acre_burn"
+names(what_i_need)[names(what_i_need)=="total_ac_engag"]<-"total_acre_engag"
+names(what_i_need)[names(what_i_need)=="gacc_burn_count"]<-"gacc_burn_cnt"
+
+
+order_colnames<-c("incident_id","fed_burn_cnt","trib_burn_cnt","st_burn_cnt","cnty_burn_cnt",
+                  "cenpl_burn_cnt","alljur_burn_cnt","fed_engag_cnt","trib_engag_cnt","st_engag_cnt",
+                  "cnty_engag_cnt","cenpl_engag_cnt","alljur_engag_cnt","fed_acre_burn",
+                  "trib_acre_burn","state_acre_burn","loc_acre_burn","priv_acre_burn","total_acre_burn",
+                  "fed_acre_engag","trib_acre_engag","state_acre_engag","loc_acre_engag",
+                  "priv_acre_engag","total_acre_engag","fed_percburn","trib_percburn","state_percburn",
+                  "loc_percburn","priv_percburn","fed_percengag","trib_percengag","state_percengag",
+                  "loc_percengag","priv_percengag","gacc_burn_cnt","gacc_engag_cnt","geometry")
+
+need_ordered<-what_i_need[,order_colnames]
+
+#colnames(what_i_need)[colnames(what_i_need)%notin% order_colnames]
+
 #explore some stats for mapping 
 
 ####not quite sure what to make of possible data transformations. did learn that county adds the most
@@ -60,48 +102,48 @@ what_i_need<-merge(incid_polys,tab_merged,by="incident_id")
 
 library(tidyverse)
 
-df_fed<-what_i_need[,c("fed_burn_cnt","fed_threat_cnt"),]
+df_fed<-need_ordered[,c("fed_burn_cnt","fed_engag_cnt"),]
 df_fed$level<-rep("federal",nrow(df_fed))
-df_trib<-what_i_need[,c("trib_burn_cnt","trib_threat_cnt"),]
+df_trib<-need_ordered[,c("trib_burn_cnt","trib_engag_cnt"),]
 df_trib$level<-rep("tribal",nrow(df_trib))
-df_st<-what_i_need[,c("st_burn_count","st_threat_count"),]
+df_st<-need_ordered[,c("st_burn_cnt","st_engag_cnt"),]
 df_st$level<-rep("state",nrow(df_st))
-df_cnty<-what_i_need[,c("cnty_burn_count","cnty_threat_count"),]
+df_cnty<-need_ordered[,c("cnty_burn_cnt","cnty_engag_cnt"),]
 df_cnty$level<-rep("county",nrow(df_cnty))
-df_cenpl<-what_i_need[,c("cenpl_burn_count","cenpl_threat_count"),]
+df_cenpl<-need_ordered[,c("cenpl_burn_cnt","cenpl_engag_cnt"),]
 df_cenpl$level<-rep("cenpl",nrow(df_cenpl))
 
 df_fed %>% 
   pivot_longer(
-    c(fed_burn_cnt, fed_threat_cnt)
+    c(fed_burn_cnt, fed_engag_cnt)
   ) %>% 
   ggplot(aes(value, fill=name))+
   geom_histogram(position = "dodge")+ggtitle("Federal")
 
 df_trib %>% 
   pivot_longer(
-    c(trib_burn_cnt, trib_threat_cnt)
+    c(trib_burn_cnt, trib_engag_cnt)
   ) %>% 
   ggplot(aes(value, fill=name))+
   geom_histogram(position = "dodge")+ggtitle("Tribal")
 
 df_st %>% 
   pivot_longer(
-    c(st_burn_count, st_threat_count)
+    c(st_burn_cnt, st_engag_cnt)
   ) %>% 
   ggplot(aes(value, fill=name))+
   geom_histogram(position = "dodge")+ggtitle("State")
 
 df_cnty %>% 
   pivot_longer(
-    c(cnty_burn_count, cnty_threat_count)
+    c(cnty_burn_cnt, cnty_engag_cnt)
   ) %>% 
   ggplot(aes(value, fill=name))+
   geom_histogram(position = "dodge")+ggtitle("County")
 
 df_cenpl %>% 
   pivot_longer(
-    c(cenpl_burn_count, cenpl_threat_count)
+    c(cenpl_burn_cnt, cenpl_engag_cnt)
   ) %>% 
   ggplot(aes(value, fill=name))+
   geom_histogram(position = "dodge")+ggtitle("Census Place")
@@ -146,15 +188,18 @@ df_cenpl %>%
 #what_i_need1<-what_i_need %>% mutate(burn_jur_level_fst=rowSums(select(., "fed_burn_cnt","st_burn_count","trib_burn_cnt")!=0))
 #commented this line out because not using county & cenpl for levels anymore
 #what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(select(., "cnty_burn_count","cenpl_burn_count")!=0))
-what_i_need$burn_jur_count<-what_i_need$fed_burn_cnt+what_i_need$trib_burn_cnt+what_i_need$st_burn_count+what_i_need$cnty_burn_count+what_i_need$cenpl_burn_count
-what_i_need$threat_jur_count<-what_i_need$fed_threat_cnt+what_i_need$trib_threat_cnt+what_i_need$st_threat_count+what_i_need$cnty_threat_count+what_i_need$cenpl_threat_count
+#what_i_need$burn_jur_count<-what_i_need$fed_burn_cnt+what_i_need$trib_burn_cnt+what_i_need$st_burn_count+what_i_need$cnty_burn_count+what_i_need$cenpl_burn_count
+#what_i_need$threat_jur_count<-what_i_need$fed_threat_cnt+what_i_need$trib_threat_cnt+what_i_need$st_threat_count+what_i_need$cnty_threat_count+what_i_need$cenpl_threat_count
 
-what_i_need2<-what_i_need %>% mutate(burn_fed_lev=rowSums(select(.,"Federal_AcreBurn")!=0),burn_trib_lev=rowSums(select(.,"Tribal_AcreBurn")!=0),burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
-                                            threat_fed_lev=rowSums(select(.,"Federal_AcreThreat")!=0),threat_trib_lev=rowSums(select(.,"Tribal_AcreThreat")!=0),threat_st_lev=rowSums(select(.,"State_AcreThreat")!=0),threat_othloc_lev=rowSums(select(.,"Other_AcreThreat")!=0),threat_priv_lev=rowSums(select(.,"Private_AcreThreat")!=0))
+what_i_need2<-need_ordered %>% mutate(fed_lev_engag=rowSums(select(.,"fed_acre_engag")!=0|select(.,"fed_acre_burn")!=0),trib_lev_engag=rowSums(select(.,"trib_acre_engag")!=0|select(.,"trib_acre_burn")!=0),st_lev_engag=rowSums(select(.,"state_acre_engag")!=0|select(.,"state_acre_burn")!=0),loc_lev_engag=rowSums(select(.,"loc_acre_engag")!=0|select(.,"loc_acre_burn")!=0),priv_lev_engag=rowSums(select(.,"priv_acre_engag")!=0|select(.,"priv_acre_burn")!=0),total_lev_engag = (fed_lev_engag+trib_lev_engag+st_lev_engag+loc_lev_engag+priv_lev_engag))#,burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
 
-what_i_need2$count_jurlev_burn<-what_i_need2$burn_fed_lev+what_i_need2$burn_trib_lev+what_i_need2$burn_st_lev+what_i_need2$burn_othloc_lev+what_i_need2$burn_priv_lev
-what_i_need2$count_jurlev_threat<-what_i_need2$threat_fed_lev+what_i_need2$threat_trib_lev+what_i_need2$threat_st_lev+what_i_need2$threat_othloc_lev+what_i_need2$threat_priv_lev
 
+#what_i_need2<-need_ordered %>% mutate(burn_fed_lev=rowSums(select(.,"Federal_AcreBurn")!=0),burn_trib_lev=rowSums(select(.,"fed_acre_engag")!=0)|select(.,"fed_acre_burn")!=0)),burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
+                                           # threat_fed_lev=rowSums(select(.,"Federal_AcreThreat")!=0),threat_trib_lev=rowSums(select(.,"Tribal_AcreThreat")!=0),threat_st_lev=rowSums(select(.,"State_AcreThreat")!=0),threat_othloc_lev=rowSums(select(.,"Other_AcreThreat")!=0),threat_priv_lev=rowSums(select(.,"Private_AcreThreat")!=0))
+
+# what_i_need2$count_jurlev_burn<-what_i_need2$burn_fed_lev+what_i_need2$burn_trib_lev+what_i_need2$burn_st_lev+what_i_need2$burn_othloc_lev+what_i_need2$burn_priv_lev
+# what_i_need2$count_jurlev_threat<-what_i_need2$threat_fed_lev+what_i_need2$threat_trib_lev+what_i_need2$threat_st_lev+what_i_need2$threat_othloc_lev+what_i_need2$threat_priv_lev
+# 
 
 #what_i_need2<-what_i_need1 %>% mutate(burn_jur_level_cntcen=rowSums(.[c(34,36)]!=0))
 # what_i_need2$burn_actual_cntcen<-NA
@@ -190,8 +235,8 @@ incid_info<-merge(what_i_need2,getstartyr,all=TRUE,by="incident_id")
 
 #look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info$burn_jur_level_cnt==4,c("incident_id","START_YEAR","burn_jur_level_cnt","threat_jur_level_cnt")]
 
-incid_info$X.x<-NULL
-incid_info$X.y<-NULL
+# incid_info$X.x<-NULL
+# incid_info$X.y<-NULL
 
 incid_info_nodup<-incid_info[!duplicated(incid_info$incident_id),]
 

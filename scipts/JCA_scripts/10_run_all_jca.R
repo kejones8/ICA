@@ -23,6 +23,9 @@ source("scipts\\JCA_scripts\\11_JCA_merge_clean_finalize_jurs.R")
 source("scipts\\JCA_scripts\\12_area_calc_func.R")
 source("scipts\\JCA_scripts\\13_area_calc_prep_fin.R")
 source("scipts\\JCA_scripts\\14_connect_data_incids_mtbs.R")
+source("scipts\\JCA_scripts\\15_QAQC_juriscounts.R")
+source("scipts\\JCA_scripts\\16_prepping_PLdata.R")
+source("scipts\\JCA_scripts\\17_attachtoICA.R")
 
 
 
