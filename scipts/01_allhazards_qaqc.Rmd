@@ -20,8 +20,8 @@ library(data.table)
 **## Reading in Data to Identify Our Sample for ICA**
 
 ```{r, cache=TRUE}
-incidents<-read.csv("data\\ics209-plus-wf_incidents_1999to2020.csv")
-sitreps<-read.csv("data\\ics209-plus-wf_sitreps_1999to2020.csv")
+incidents<-read.csv("raw_data\\all_hazards\\ics-209-plus-2.0-pre-release-v1\\ics-209-plus-2.0-pre-release-v1\\ics209-plus-wf_incidents_1999to2020.csv")
+sitreps<-read.csv("raw_data\\all_hazards\\ics-209-plus-2.0-pre-release-v1\\ics-209-plus-2.0-pre-release-v1\\ics209-plus-wf_sitreps_1999to2020.csv")
 ```
 
 
@@ -41,7 +41,7 @@ SitReps Incident_IDs: `r toString(sit_rows)`
 #check fire use types - we only care about wildfires
 unique(incidents$INCTYP_ABBREVIATION)
 #get just the wildfires
-wf_inc<-incidents[incidents$INCTYP_ABBREVIATION %in% c("WF","WFU"),]
+wf_inc<-incidents[incidents$INCTYP_ABBREVIATION %in% c("WF","WFU","CX"),]
 #see how it reduces dataset 
 num_wf_inc<-length(unique(wf_inc$INCIDENT_ID))
 
@@ -101,7 +101,7 @@ ggplot(inc_peryear_comp, aes(x = START_YEAR , y= n, fill=COMPLEX)) +
 ```
 
 
-**\textcolor{red}{1. INVESTIGATE WHY NO COMPLEXES IN LATER YEARS (look in the ics209-plus-wf_incidents_1999to2020.csv)}**
+**\textcolor{red}{1. INVESTIGATE WHY NO COMPLEXES IN LATER YEARS (look in the wildfire incidents csv)}**
 
 
 
@@ -199,7 +199,7 @@ hist(type12_wf_inc_nimo$FOD_FIRE_NUM,breaks=25,main="Count of Incidents by the N
 
 There are `r howmany_nas` incidents with no FOD_FIRES associated (where the FOD_FIRE_NUM columns is NA). Want to take a look at these fires, I think. Would be good to know just how many of our sample for ICA might not link to FOD database. This COULD be explained by the incidents from 2018-2020 not being linked to FOD yet. 
 
-**\textcolor{red}{4. INVESTIGATE INCIDENTS THAT SHOW *NA* FOR "FOD_FIRE_NUM" & INCIDENTS THAT HAVE GREATER THAN 10 FOR "FOD_FIRE_NUM". ALSO, MAKE SURE THAT NON-COMPLEX INCIDENTS ONLY HAVE AN "FOD_FIRE_NUM" OF 1.}**
+**\textcolor{red}{4. INVESTIGATE INCIDENTS THAT SHOW NA FOR fodfirenum \& INCIDENTS THAT HAVE GREATER THAN 10 FOR forfirenum. ALSO, MAKE SURE THAT NON-COMPLEX INCIDENTS ONLY HAVE AN forfirenum OF 1.}**
 
 # Structures Damaged
 **## Now, we want to look at the structures *damaged* data just to get an idea if the changes in recording through time appear in our data. Can do a deeper dive later.**
@@ -325,7 +325,7 @@ melty_plot +  geom_bar(aes(x=year,y=value,factor=variable,fill=variable,
  scale_color_manual(name="Mean Total Dest", values = c("black" = "black"))
 ```
 
-**\textcolor{red}{7. 2020 goes throug the roof - check that a number for structures threatened for 2020 could be north of 1.5 million (sum max threatened for all incidents) ?}**
+**\textcolor {red}{7. 2020 goes throug the roof - check that a number for structures threatened for 2020 could be north of 1.5 million (sum max threatened for all incidents) ?}**
 
 * There are more outliers in the histograms above, just plotting to get the general shape of the data (cut off few incidents with high structure counts).
 * Total threatened seems to be mostly explained by residential, few if any commercial values AND the total threatened appears to align with the residential threatened, unlike the structured destroyed & damaged where total doesn't equal the sum of residential + commercial.

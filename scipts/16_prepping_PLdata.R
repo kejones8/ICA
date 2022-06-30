@@ -10,7 +10,7 @@ pl<-read.csv("data\\raw_pl_data.csv",header=FALSE)
 pl[1,1]<-"January"
 
 #using this in place of subinc & comp below
-incidents<-read.csv("oursample.csv")
+incidents<-read.csv("data\\oursample.csv")
 
 #read in incident data
 # subinc<-read.csv("C:/Users/thebrain/Dropbox/FireChasers/new/data/Incident_records/subinc_affected_jur.csv",header=TRUE)

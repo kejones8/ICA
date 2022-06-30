@@ -88,9 +88,11 @@ print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
 
-toconnectincandmtbs<-read_sf(burn_surfman_inter_out)
+#write_sf
 
-whatitdo_burn<-merge(toconnectincandmtbs,mtbs_withincid,by.x="Event_ID","mtbs_ids")
+#toconnectincandmtbs<-read_sf(burn_surfman_inter_out)
+
+whatitdo_burn<-merge(burn_intersected,mtbs_withincid,by.x="Event_ID","mtbs_ids")
 
 write_sf(whatitdo_burn,burn_surfman_inter_out,overwrite=TRUE)
 
@@ -134,42 +136,42 @@ print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
 
-whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
+whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
 
 #threat_intersected<-read_sf(threat_surfman_inter_out)
 #write out all surfman polygons intersected wtih individual threatened areas
 write_sf(whatitdo_threat,threat_surfman_inter_out,overwrite=TRUE)
 #threat_intersected<-read_sf(threat_surfman_inter_out)
-threat_intersected<-read_sf(threat_surfman_inter_out)
+#threat_intersected<-read_sf(threat_surfman_inter_out)
 
 #now want to join this with a list of mtbsids by INCIDENT_IDs
 #this links all jurisdictional data to INCIDENT_IDbove
 #whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
 
 #same steps as above with burned data
-threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Evnt_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","brn_ntr","thrt_nt")]
+threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","burn_inter","threat_inter")]
 threat_inter_trimmed$geometry<-NULL
 threatened_jurs_unique<-unique(threat_inter_trimmed)
 
 ##EXTRA step required for threatened data becauase we want mutually exclusive lists
 #only include in threatened list jurisdictions that were not already burned
-only_threat<-threatened_jurs_unique[threatened_jurs_unique$brn_ntr==FALSE,]
+only_threat<-threatened_jurs_unique[threatened_jurs_unique$burn_inter==FALSE,]
 write.csv(only_threat,threat_juris_byincid_out)
 
-#removed this stuff because it doesn't capture what i need for sates/counties
-# #now, make list of incidents that have NON federal lands burned 
-# #not searching for the absence of federal lands, but rather, the presence of non-fed
-jurs_burned_ontononfed<-burned_jurs_unique[is.na(burned_jurs_unique$JrsdcUK)| burned_jurs_unique$JrsdcUK=="Other"| burned_jurs_unique$JrsdcUK=="Private",]
-
+# #removed this stuff because it doesn't capture what i need for sates/counties
+# # #now, make list of incidents that have NON federal lands burned 
+# # #not searching for the absence of federal lands, but rather, the presence of non-fed
+# jurs_burned_ontononfed<-burned_jurs_unique[is.na(burned_jurs_unique$JrsdcUK)| burned_jurs_unique$JrsdcUK=="Other"| burned_jurs_unique$JrsdcUK=="Private",]
+# 
+# # #get indicident ids that have NA, other, or private lands burned
+# burn_incid_count_stcnty<-unique(jurs_burned_ontononfed$incident_id)
+# 
+# #do it for threatened
+# jurs_threat_ontononfed<-threatened_jurs_unique[is.na(threatened_jurs_unique$JrsdcUK)| threatened_jurs_unique$JrsdcUK=="Other"| threatened_jurs_unique$JrsdcUK=="Private",]
+# 
 # #get indicident ids that have NA, other, or private lands burned
-burn_incid_count_stcnty<-unique(jurs_burned_ontononfed$incident_id)
-
-#do it for threatened
-jurs_threat_ontononfed<-threatened_jurs_unique[is.na(threatened_jurs_unique$JrsdcUK)| threatened_jurs_unique$JrsdcUK=="Other"| threatened_jurs_unique$JrsdcUK=="Private",]
-
-#get indicident ids that have NA, other, or private lands burned
-threat_incid_count_stcnty<-unique(jurs_threat_ontononfed$incident_id)
-
-###don't actually think i use/need these....
-write.csv(burn_incid_count_stcnty,burn_incid_count_stcnty_out)
-write.csv(threat_incid_count_stcnty,threat_incid_count_stcnty_out)
+# threat_incid_count_stcnty<-unique(jurs_threat_ontononfed$incident_id)
+# 
+# ###don't actually think i use/need these....
+# write.csv(burn_incid_count_stcnty,burn_incid_count_stcnty_out)
+# write.csv(threat_incid_count_stcnty,threat_incid_count_stcnty_out)

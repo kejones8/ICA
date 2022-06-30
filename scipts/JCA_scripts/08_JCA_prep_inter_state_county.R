@@ -17,6 +17,7 @@ surfman_int_threatarea$JrsdcUK[is.na(surfman_int_threatarea$JrsdcUK)]<-"census"
 
 nonfed_surfman_burn<-surfman_int_burnarea[surfman_int_burnarea$JrsdcUK!="Federal",]
 nonfed_surfman_burn_buf<-st_buffer(nonfed_surfman_burn,0)
+colnames(nonfed_surfman_burn_buf)[1]<-"Event_ID"
 #nonfed_surfman_burn_buf<-nonfed_surfman_burn_buf[!is.na(nonfed_surfman_burn_buf$Event_ID),]
 
 nonfed_burn_diss <- nonfed_surfman_burn_buf %>% group_by(Event_ID) %>% summarize()
@@ -28,8 +29,9 @@ write_sf(nonfed_burn_diss,nonfed_burn_diss_out)
 
 nonfed_surfman_threat<-surfman_int_threatarea[surfman_int_threatarea$JrsdcUK!="Federal",]
 nonfed_surfman_threat_buf<-st_buffer(nonfed_surfman_threat,0)
+colnames(nonfed_surfman_threat_buf)[1]<-"Event_ID"
 #nonfed_surfman_threat_buf<-nonfed_surfman_threat_buf[!is.na(nonfed_surfman_threat_buf$Evnt_ID),]
-nonfed_threat_diss <- nonfed_surfman_threat_buf %>% group_by(Evnt_ID) %>% summarize()
+nonfed_threat_diss <- nonfed_surfman_threat_buf %>% group_by(Event_ID) %>% summarize()
 write_sf(nonfed_threat_diss,nonfed_threat_diss_out)
 #nonfed_surfman_threat_union<-st_union(nonfed_surfman_threat)
 #write_sf(nonfed_surfman_threat_union,"data\\JCA\\nonfed_threat_stcntyuse.shp")
@@ -118,13 +120,13 @@ ptm <- proc.time()
 print(Sys.time())
 
 #is this right??
-non_fed_threat_mtbsids<-unique(nonfed_threat_diss$Evnt_ID)
+non_fed_threat_mtbsids<-unique(nonfed_threat_diss$Event_ID)
 
 #for every burned area mtbs footprint, intersect with surface management 
 #write out combined sf object with all intersections
 threat_nonfed_cnty_inter<-foreach(i=non_fed_threat_mtbsids, .combine = rbind, .packages=c('sf')) %dopar%  {
   
-  fp<-nonfed_threat_diss[nonfed_threat_diss$Evnt_ID==i,]
+  fp<-nonfed_threat_diss[nonfed_threat_diss$Event_ID==i,]
   cnty_forthreat<-st_intersection(fp,cnty_tointer)#5 miles = 8047 meters
   
 }
@@ -138,13 +140,13 @@ ptm <- proc.time()
 print(Sys.time())
 
 #is this right??
-non_fed_threat_mtbsids<-unique(nonfed_threat_diss$Evnt_ID)
+non_fed_threat_mtbsids<-unique(nonfed_threat_diss$Event_ID)
 
 #for every burned area mtbs footprint, intersect with surface management 
 #write out combined sf object with all intersections
 threat_nonfed_st_inter<-foreach(i=non_fed_threat_mtbsids, .combine = rbind, .packages=c('sf')) %dopar%  {
   
-  fp<-nonfed_threat_diss[nonfed_threat_diss$Evnt_ID==i,]
+  fp<-nonfed_threat_diss[nonfed_threat_diss$Event_ID==i,]
   st_forthreat<-st_intersection(fp,state_tointer)#5 miles = 8047 meters
   
 }
@@ -294,16 +296,16 @@ burn_cnty_uni<-unique(burn_cnty_trim)
 
 
 #now, join back with incident ids
-threat_st_withincid<-merge(threat_nonfed_st_inter,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
-threat_st_trim<-threat_st_withincid[,c("incident_id","Evnt_ID","GEOID")]
+threat_st_withincid<-merge(threat_nonfed_st_inter,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
+threat_st_trim<-threat_st_withincid[,c("incident_id","Event_ID","GEOID")]
 threat_st_trim$geometry<-NULL
 
 threat_st_uni<-unique(threat_st_trim)
 
 
 #now, join back with incident ids
-threat_cnty_withincid<-merge(threat_nonfed_cnty_inter,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
-threat_cnty_trim<-threat_cnty_withincid[,c("incident_id","Evnt_ID","GEOID")]
+threat_cnty_withincid<-merge(threat_nonfed_cnty_inter,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
+threat_cnty_trim<-threat_cnty_withincid[,c("incident_id","Event_ID","GEOID")]
 threat_cnty_trim$geometry<-NULL
 
 threat_cnty_uni<-unique(threat_cnty_trim)

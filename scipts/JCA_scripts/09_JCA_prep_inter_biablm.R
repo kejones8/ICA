@@ -18,7 +18,9 @@ blm_proj<-st_transform(blm,5070)
 
 #read in spatial file that grabs all surfman that intersect burned and threatened areas
 surfman_int_burnarea<-read_sf(burn_surfman_inter_out)
+colnames(surfman_int_burnarea)[1]<-"Event_ID"
 surfman_int_threatarea<-read_sf(threat_surfman_inter_out)
+colnames(surfman_int_threatarea)[1]<-"Event_ID"
 
 #get the bia & blm areas out of those shapefiles
 surfman_burn_bia<-surfman_int_burnarea[surfman_int_burnarea$JrsdcUA=="BIA",]

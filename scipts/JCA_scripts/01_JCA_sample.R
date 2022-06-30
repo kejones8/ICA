@@ -6,7 +6,7 @@ library(dplyr)
 library(tidyr)
 
 #read in output from 01_allhazards_
-ica_samp<-read.csv("oursample.csv")
+ica_samp<-read.csv("data\\oursample.csv")
 
 length(unique(ica_samp$INCIDENT_ID))
 
@@ -64,5 +64,5 @@ colnames(incids_mtbs_nonas)[2]<-"mtbs_ids"
 
 addyears<-merge(incids_mtbs_nonas,incid_years,by.x="incident_id",by.y="INCIDENT_ID")
 
-write.csv(addyears,jca_samp_mtbs)
+write.csv(addyears,jca_samp_in)
 
