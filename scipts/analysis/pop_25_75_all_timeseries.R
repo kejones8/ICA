@@ -5,16 +5,21 @@ library(lamisc)
 # library(scales)
 library(TTR)
 
+#CHANGE TO THE FOLDER ON YOUR COMPUTER WHERE DATA IS STORED AND WHAT TO WRITE PLOTS TO
 setwd("C:\\Users\\thebrain\\Dropbox\\FireChasers\\JCA_analysis")
-      
+
 #read in up to date incident table
+#CHANGE TO NEW DATA NAME
 incidents<-read.csv("data\\inc_level_table_1002.csv")
 
 #get rid of one anomalous incident that was caused by erroneous 209
 #data set to year 1902 instead of 2002
+#CHANGE TO $DURATION
 incidents<-incidents[incidents$Days_Type1_2<1000,]
 
 #creating variables that aren't already in the incident table
+#CHANGE variables created below if you want any new variables plotted
+#confirm that all variables being used to create new variables exist in the "incidents" dataframe
 incidents$JUR_COMP_SCORE<-incidents$TOTAL_JUR_AFF * incidents$JUR_LEVEL_AFF
 incidents$VALS_AT_RISK<-incidents$DAMAG_TOTAL+incidents$MAX_THREAT+incidents$DEST_TOTAL
 incidents$NPL_DAYS_4_5<-incidents$Days_PL4+incidents$Days_PL5
@@ -29,9 +34,13 @@ incidents$dd_split_mm<-sapply(str_split(incidents$mnth_year_dd,"-"),`[`, 2)
 incidents$year_mon<-paste0(incidents$dd_split_yr,"-",incidents$dd_split_mm)
 
 #specify variables we want to plot
-var_names<-c("FINAL_ACRES","CNT_FIRE_PERIMS","Days_Type1_2","JUR_COMP_SCORE","VALS_AT_RISK","NPL_DAYS_4_5")
+#var_names<-c("FINAL_ACRES","CNT_FIRE_PERIMS","Days_Type1_2","JUR_COMP_SCORE","VALS_AT_RISK","NPL_DAYS_4_5")
+#CHANGE $DAYS_Type1_2 -> $duration...not the same, but we don't have a Days_Type1_2 column anymore
+var_names<-c("FINAL_ACRES","Days_Type1_2","JUR_COMP_SCORE","VALS_AT_RISK","NPL_DAYS_4_5")
+
 
 #get the columns of interest
+#CHANGE  to $START_YEAR
 incidents_subset<-incidents[,c("INCIDENT_ID","YEAR","year_mon",var_names)]
 incidents_sub_comp<-incidents_subset[complete.cases(incidents_subset),]#do complete cases
 
@@ -51,53 +60,55 @@ table_list<-list(incidents_sub_comp_preproc,incidents25,incidents75)
 
 
 for (i in 1:length(table_list)){
-
-#   #### If you want to delete existing plots & rerun #####
-
-# unlink(paste0("figures\\",pop_samples[i]), recursive = TRUE)
-# unlink(paste0("figures\\",pop_samples[i]), recursive = TRUE)
-# unlink(paste0("figures\\",pop_samples[i]), recursive = TRUE)
-# 
-# dir.create(paste0("figures\\",pop_samples[i]))
-# dir.create(paste0("figures\\",pop_samples[i]))
-# dir.create(paste0("figures\\",pop_samples[i]))
-
-
-#step through the variables
-for (x in 1:length(var_names)) {
   
-  #loop through all incidents, 25 or 75%
-  df<-table_list[[i]]
+  #   #### If you want to delete existing plots & rerun #####
   
-  #specify variable
-  var_name<-var_names[x]
+  # unlink(paste0("figures\\",pop_samples[i]), recursive = TRUE)
+  # unlink(paste0("figures\\",pop_samples[i]), recursive = TRUE)
+  # unlink(paste0("figures\\",pop_samples[i]), recursive = TRUE)
+  # 
+  # dir.create(paste0("figures\\",pop_samples[i]))
+  # dir.create(paste0("figures\\",pop_samples[i]))
+  # dir.create(paste0("figures\\",pop_samples[i]))
   
-  df_uni<-unique(df[,c("INCIDENT_ID","YEAR",var_name)])
-
-  #take average of variables by year
-  mean_table<- df_uni %>% group_by(YEAR) %>% summarize(mean=mean(.data[[var_name]]))
-
-  #make the title for each plot
-  title_to_plot<-paste0(pop_samples[i],"_",var_name)
   
-  #plot the regression using the mean of the variable and the year
-  #as the temporal unit
- to_print <-mean_table %>%
-    # group_by(INCIDENT_ID) %>%
-    plot_time_series_regression(
-      .date_var    = YEAR,
-      .formula     = mean ~ as.numeric(YEAR),# + month(mnth_year_rt),
-      #.facet_ncol  = 2,
-      .interactive = FALSE,
-      .show_summary = TRUE,
-      #.title = paste0(pop_samples[i]," : ",var_name),
-    )
- 
+  #step through the variables
+  for (x in 1:length(var_names)) {
+    
+    #loop through all incidents, 25 or 75%
+    df<-table_list[[i]]
+    
+    #specify variable
+    var_name<-var_names[x]
+    
+    #CHANGE $START_YEAR
+    df_uni<-unique(df[,c("INCIDENT_ID","YEAR",var_name)])
+    
+    #take average of variables by year
+    mean_table<- df_uni %>% group_by(YEAR) %>% summarize(mean=mean(.data[[var_name]]))
+    
+    #make the title for each plot
+    title_to_plot<-paste0(pop_samples[i],"_",var_name)
+    
+    #plot the regression using the mean of the variable and the year
+    #as the temporal unit
+    to_print <-mean_table %>%
+      # group_by(INCIDENT_ID) %>%
+      plot_time_series_regression(
+        .date_var    = YEAR,
+        .formula     = mean ~ as.numeric(YEAR),# + month(mnth_year_rt),
+        #.facet_ncol  = 2,
+        .interactive = FALSE,
+        .show_summary = TRUE,
+        #.title = paste0(pop_samples[i]," : ",var_name),
+      )
+    
     #get slope from summary table
     slope<-round(to_print$data[4,4]-to_print$data[2,4],4)
     
     #create the file for the plot
-    png(filename=paste0("figures\\figs_1025\\",pop_samples[i],"\\",pop_samples[i],"_",var_name,".png"))
+    
+    png(filename=paste0("figures\\",pop_samples[i],"\\",pop_samples[i],"_",var_name,".png"))
     
     #open, plot, and add slope text
     plot.new()
@@ -105,10 +116,10 @@ for (x in 1:length(var_names)) {
     text(.85,.92,paste0("slope= ",slope),cex=1.25)
     
     dev.off() #close
+    
+    
+  }
   
-
-}
-
 }
 
 
