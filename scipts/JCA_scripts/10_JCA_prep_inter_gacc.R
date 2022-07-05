@@ -85,13 +85,17 @@ threat_gacc_rmburn<-threat_gacc_incid[threat_gacc_incid$torm_inburn==FALSE,]
 threat_gacc_unique<-unique(threat_gacc_rmburn[,c("incident_id","GACCAbbrev")])
 
 
-threat_blm_cnt<-threat_gacc_unique %>% group_by(incident_id) %>% summarize(cnt_gacc_threat=n_distinct(GACCAbbrev))
+threat_blm_cnt<-threat_gacc_unique %>% group_by(incident_id) %>% dplyr::summarize(cnt_gacc_threat=n_distinct(GACCAbbrev))
+
 
 write.csv(threat_blm_cnt,threat_gacc_count_out)
 
 burn_gacc_unique<-unique(burn_gacc_incid[,c("incident_id","GACCAbbrev")])
 
-burn_gacc_cnt<-burn_gacc_incid %>% group_by(incident_id) %>% summarize(cnt_gacc_burn=n_distinct(GACCAbbrev))
+#write this out for final plotting code
+write.csv(burn_gacc_unique,"data\\JCA\\incident_gaccburned.csv")
+
+burn_gacc_cnt<-burn_gacc_incid %>% group_by(incident_id) %>% dplyr::summarize(cnt_gacc_burn=n_distinct(GACCAbbrev))
 
 
 write.csv(burn_gacc_cnt,burn_gacc_count_out)

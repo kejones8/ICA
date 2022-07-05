@@ -75,5 +75,5 @@ type12_wf_inc$LNGTH_FIRE_DAYS[type12_wf_inc$LNGTH_FIRE_DAYS < 0] <- type12_wf_in
 
 type12_wf_inc$LNGTH_FIRE_DAYS[type12_wf_inc$LNGTH_FIRE_DAYS < 0,] <- type12_wf_inc$LNGTH_FIRE_DAYS + 365
 
-type12_wf_inc$LNGTH_FIRE_DAYS<-if(type12_wf_inc$LNGTH_FIRE_DAYS<0,type12_wf_inc$LNGTH_FIRE_DAYS+365)
-hist(type12_wf_inc$LNGTH_FIRE_DAYS,breaks=100)
+#type12_wf_inc$LNGTH_FIRE_DAYS<-if(type12_wf_inc$LNGTH_FIRE_DAYS<0,type12_wf_inc$LNGTH_FIRE_DAYS+365)
+#hist(type12_wf_inc$LNGTH_FIRE_DAYS,breaks=100)

@@ -50,7 +50,7 @@ fed_threat_burnrm$torm_inburn<-NULL
 #more than one DOD, for DOD keep burn and threatened separte BECAUSE
 #if any dod is burned, count it as 1 burned, no threatened
 #if no DOD is burned, count threatened as 1 
-dod_count_burn<-fed_burn %>% filter(JrsdcUA=="DOD") %>% group_by(incident_id) %>% summarize(dod_count=n_distinct(JrsdcUN))
+dod_count_burn<-fed_burn %>% filter(JrsdcUA=="DOD") %>% group_by(incident_id) %>% dplyr::summarize(dod_count=n_distinct(JrsdcUN))
 dod_count_burn$dod_cnt_cln<-1
 dod_count_burn$dod_count<-NULL
 
@@ -58,7 +58,7 @@ threat_dod<-fed_threat_burnrm[fed_threat_burnrm$JrsdcUA=="DOD",]
 
 fed_threat_dod<-threat_dod[threat_dod$incident_id %notin% dod_count_burn$incident_id,]
 
-dod_count_threat<-fed_threat_dod %>% group_by(incident_id) %>% summarize(dod_count=n_distinct(JrsdcUN))
+dod_count_threat<-fed_threat_dod %>% group_by(incident_id) %>% dplyr::summarize(dod_count=n_distinct(JrsdcUN))
 dod_count_threat$dod_cnt_thrt_cln<-1
 dod_count_threat$dod_count<-NULL
 
@@ -67,7 +67,7 @@ write.csv(dod_count_threat,dod_threat_count_out)
 
 
 #treat doe the same way as DOD
-doe_count_burn<-fed_burn %>% filter(JrsdcUA=="DOE") %>% group_by(incident_id) %>% summarize(doe_count=n_distinct(JrsdcUN))
+doe_count_burn<-fed_burn %>% filter(JrsdcUA=="DOE") %>% group_by(incident_id) %>% dplyr::summarize(doe_count=n_distinct(JrsdcUN))
 doe_count_burn$doe_cnt_cln<-1
 doe_count_burn$doe_count<-NULL
 
@@ -75,7 +75,7 @@ threat_doe<-fed_threat_burnrm[fed_threat_burnrm$JrsdcUA=="DOE",]
 
 fed_threat_doe<-threat_doe[threat_doe$incident_id %notin% doe_count_burn$incident_id,]
 
-doe_count_threat<-fed_threat_doe %>% group_by(incident_id) %>% summarize(doe_count=n_distinct(JrsdcUN))
+doe_count_threat<-fed_threat_doe %>% group_by(incident_id) %>% dplyr::summarize(doe_count=n_distinct(JrsdcUN))
 doe_count_threat$doe_cnt_thrt_cln<-1
 doe_count_threat$doe_count<-NULL
 
@@ -84,7 +84,7 @@ write.csv(doe_count_threat,doe_threat_count_out)
 
 
 #handle BOR the same as dod & doe
-bor_count_burn<-fed_burn %>% filter(JrsdcUA=="BOR") %>% group_by(incident_id) %>% summarize(bor_count=n_distinct(JrsdcUN))
+bor_count_burn<-fed_burn %>% filter(JrsdcUA=="BOR") %>% group_by(incident_id) %>% dplyr::summarize(bor_count=n_distinct(JrsdcUN))
 bor_count_burn$bor_cnt_cln<-1
 bor_count_burn$bor_count<-NULL
 
@@ -92,7 +92,7 @@ threat_bor<-fed_threat_burnrm[fed_threat_burnrm$JrsdcUA=="BOR",]
 
 fed_threat_bor<-threat_bor[threat_bor$incident_id %notin% bor_count_burn$incident_id,]
 
-bor_count_threat<-fed_threat_bor %>% group_by(incident_id) %>% summarize(bor_count=n_distinct(JrsdcUN))
+bor_count_threat<-fed_threat_bor %>% group_by(incident_id) %>% dplyr::summarize(bor_count=n_distinct(JrsdcUN))
 bor_count_threat$bor_cnt_thrt_cln<-1
 bor_count_threat$bor_count<-NULL
 
@@ -100,7 +100,7 @@ write.csv(bor_count_burn,bor_burn_count_out)
 write.csv(bor_count_threat,bor_threat_count_out)
 
 #TVA
-tva_count_burn<-fed_burn %>% filter(JrsdcUI=="TNTVA") %>% group_by(incident_id) %>% summarize(tva_count=n_distinct(JrsdcUN))
+tva_count_burn<-fed_burn %>% filter(JrsdcUI=="TNTVA") %>% group_by(incident_id) %>% dplyr::summarize(tva_count=n_distinct(JrsdcUN))
 tva_count_burn$tva_cnt_cln<-1
 tva_count_burn$tva_count<-NULL
 
@@ -108,7 +108,7 @@ threat_tva<-fed_threat_burnrm[fed_threat_burnrm$JrsdcUI=="TNTVA",]
 
 fed_threat_tva<-threat_tva[threat_tva$incident_id %notin% tva_count_burn$incident_id,]
 
-tva_count_threat<-fed_threat_tva %>% group_by(incident_id) %>% summarize(tva_count=n_distinct(JrsdcUN))
+tva_count_threat<-fed_threat_tva %>% group_by(incident_id) %>% dplyr::summarize(tva_count=n_distinct(JrsdcUN))
 tva_count_threat$tva_cnt_thrt_cln<-1
 tva_count_threat$tva_count<-NULL
 
@@ -118,7 +118,7 @@ write.csv(tva_count_threat,tva_threat_count_out)
 
 
 #USFWS
-usfws_count_burn<-fed_burn %>% filter(JrsdcUA=="USFWS") %>% group_by(incident_id) %>% summarize(usfws_count=n_distinct(JrsdcUN))
+usfws_count_burn<-fed_burn %>% filter(JrsdcUA=="USFWS") %>% group_by(incident_id) %>% dplyr::summarize(usfws_count=n_distinct(JrsdcUN))
 usfws_count_burn$usfws_cnt_cln<-1
 usfws_count_burn$usfws_count<-NULL
 
@@ -126,7 +126,7 @@ threat_usfws<-fed_threat_burnrm[fed_threat_burnrm$JrsdcUA=="USFWS",]
 
 fed_threat_usfws<-threat_usfws[threat_usfws$incident_id %notin% usfws_count_burn$incident_id,]
 
-usfws_count_threat<-fed_threat_usfws %>% group_by(incident_id) %>% summarize(usfws_count=n_distinct(JrsdcUN))
+usfws_count_threat<-fed_threat_usfws %>% group_by(incident_id) %>% dplyr::summarize(usfws_count=n_distinct(JrsdcUN))
 usfws_count_threat$usfws_cnt_thrt_cln<-1
 usfws_count_threat$usfws_count<-NULL
 
@@ -135,9 +135,9 @@ write.csv(usfws_count_threat,usfws_threat_count_out)
 
 #NPS
 #want to count unique JrsdcUI codes
-nps_count_burn<-fed_burn %>% filter(JrsdcUA=="NPS") %>% group_by(incident_id) %>% summarize(nps_count=n_distinct(JrsdcUN))
+nps_count_burn<-fed_burn %>% filter(JrsdcUA=="NPS") %>% group_by(incident_id) %>% dplyr::summarize(nps_count=n_distinct(JrsdcUN))
 
-nps_count_threat<-fed_threat_burnrm %>% filter(JrsdcUA=="NPS") %>% group_by(incident_id) %>% summarize(nps_count=n_distinct(JrsdcUN))
+nps_count_threat<-fed_threat_burnrm %>% filter(JrsdcUA=="NPS") %>% group_by(incident_id) %>% dplyr::summarize(nps_count=n_distinct(JrsdcUN))
 
 write.csv(nps_count_burn,nps_burn_count_out)
 write.csv(nps_count_threat,nps_threat_count_out)
@@ -184,13 +184,13 @@ usfs_threat<-fed_threat_burnrm%>% filter(JrsdcUA=="USFS")
 
 
 #want to count unique JrsdcUI codes
-# usfs_count_burn<-countthese_usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+# usfs_count_burn<-countthese_usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% dplyr::summarize(usfs_count=n_distinct(JrsdcUN ))
 # 
-# usfs_count_threat<-countthese_usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN ))
+# usfs_count_threat<-countthese_usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% dplyr::summarize(usfs_count=n_distinct(JrsdcUN ))
 
-usfs_count_burn<-usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN))
+usfs_count_burn<-usfs_burn %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% dplyr::summarize(usfs_count=n_distinct(JrsdcUN))
 
-usfs_count_threat<-usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% summarize(usfs_count=n_distinct(JrsdcUN))
+usfs_count_threat<-usfs_threat %>% filter(JrsdcUA=="USFS") %>% group_by(incident_id) %>% dplyr::summarize(usfs_count=n_distinct(JrsdcUN))
 
 write.csv(usfs_count_burn,usfs_burn_count_out)
 write.csv(usfs_count_threat,usfs_threat_count_out)
@@ -213,9 +213,9 @@ other_tribal_threat$torm_inburn<-ifelse(is.na(match(paste0(other_tribal_threat$i
 othtrib_threat_burnrm<-other_tribal_threat[other_tribal_threat$torm_inburn==FALSE,]
 othtrib_threat_burnrm$torm_inburn<-NULL
 
-othtrib_count_burn<-other_tribal_burn  %>% group_by(incident_id) %>% summarize(trib_count=n_distinct(JrsdcUN))
+othtrib_count_burn<-other_tribal_burn  %>% group_by(incident_id) %>% dplyr::summarize(trib_count=n_distinct(JrsdcUN))
 
-othtrib_count_threat<-othtrib_threat_burnrm %>% group_by(incident_id) %>% summarize(trib_count=n_distinct(JrsdcUN))
+othtrib_count_threat<-othtrib_threat_burnrm %>% group_by(incident_id) %>% dplyr::summarize(trib_count=n_distinct(JrsdcUN))
 
 write.csv(othtrib_count_burn,othtrib_burn_count_out)
 write.csv(othtrib_count_threat,othtrib_threat_count_out)
@@ -239,7 +239,7 @@ ancsa_threat_burnrm$torm_inburn<-NULL
 
 #ANCSA will get handled like dod/doe/majority of fed jurisdictions
 #treat doe the same way as DOD
-ancsa_count_burn<-ancsa_burn  %>% group_by(incident_id) %>% summarize(ancsa_count=n_distinct(JrsdcUN))
+ancsa_count_burn<-ancsa_burn  %>% group_by(incident_id) %>% dplyr::summarize(ancsa_count=n_distinct(JrsdcUN))
 ancsa_count_burn$ancsa_cnt_cln<-1
 ancsa_count_burn$ancsa_count<-NULL
 
@@ -247,7 +247,7 @@ threat_ancsa<-fed_threat_burnrm[fed_threat_burnrm$JrsdcUA=="ANCSA",]
 
 fed_threat_ancsa<-ancsa_threat_burnrm[ancsa_threat_burnrm$incident_id %notin% ancsa_count_burn$incident_id,]
 
-ancsa_count_threat<-fed_threat_ancsa %>% group_by(incident_id) %>% summarize(ancsa_count=n_distinct(JrsdcUN))
+ancsa_count_threat<-fed_threat_ancsa %>% group_by(incident_id) %>% dplyr::summarize(ancsa_count=n_distinct(JrsdcUN))
 ancsa_count_threat$ancsa_cnt_thrt_cln<-1
 ancsa_count_threat$ancsa_count<-NULL
 

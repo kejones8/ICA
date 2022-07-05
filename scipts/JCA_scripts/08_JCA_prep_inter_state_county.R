@@ -18,9 +18,9 @@ surfman_int_threatarea$JrsdcUK[is.na(surfman_int_threatarea$JrsdcUK)]<-"census"
 nonfed_surfman_burn<-surfman_int_burnarea[surfman_int_burnarea$JrsdcUK!="Federal",]
 nonfed_surfman_burn_buf<-st_buffer(nonfed_surfman_burn,0)
 colnames(nonfed_surfman_burn_buf)[1]<-"Event_ID"
-#nonfed_surfman_burn_buf<-nonfed_surfman_burn_buf[!is.na(nonfed_surfman_burn_buf$Event_ID),]
+nonfed_surfman_burn_buf<-nonfed_surfman_burn_buf[!is.na(nonfed_surfman_burn_buf$Event_ID),]
 
-nonfed_burn_diss <- nonfed_surfman_burn_buf %>% group_by(Event_ID) %>% summarize()
+nonfed_burn_diss <- nonfed_surfman_burn_buf %>% group_by(Event_ID) %>% dplyr::summarize()
 write_sf(nonfed_burn_diss,nonfed_burn_diss_out)
 
 #nonfed_surfman_burn_union<-st_union(nonfed_surfman_burn)
@@ -31,7 +31,7 @@ nonfed_surfman_threat<-surfman_int_threatarea[surfman_int_threatarea$JrsdcUK!="F
 nonfed_surfman_threat_buf<-st_buffer(nonfed_surfman_threat,0)
 colnames(nonfed_surfman_threat_buf)[1]<-"Event_ID"
 #nonfed_surfman_threat_buf<-nonfed_surfman_threat_buf[!is.na(nonfed_surfman_threat_buf$Evnt_ID),]
-nonfed_threat_diss <- nonfed_surfman_threat_buf %>% group_by(Event_ID) %>% summarize()
+nonfed_threat_diss <- nonfed_surfman_threat_buf %>% group_by(Event_ID) %>% dplyr::summarize()
 write_sf(nonfed_threat_diss,nonfed_threat_diss_out)
 #nonfed_surfman_threat_union<-st_union(nonfed_surfman_threat)
 #write_sf(nonfed_surfman_threat_union,"data\\JCA\\nonfed_threat_stcntyuse.shp")
@@ -325,14 +325,14 @@ threat_cnt_jurs_tokeep<-threat_cnty_uni[threat_cnty_uni$torm_inburn==FALSE,]
 threat_st_jurs_tokeep<-threat_st_uni[threat_st_uni$torm_inburn==FALSE,]
 
 ##now write out tables for counting
-threat_cnty_cnt<-threat_cnt_jurs_tokeep %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
-threat_st_cnt<-threat_st_jurs_tokeep %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
+threat_cnty_cnt<-threat_cnt_jurs_tokeep %>% group_by(incident_id) %>% dplyr::summarize(count=n_distinct(GEOID))
+threat_st_cnt<-threat_st_jurs_tokeep %>% group_by(incident_id) %>% dplyr::summarize(count=n_distinct(GEOID))
 
 write.csv(threat_cnty_cnt,threat_county_count_out)
 write.csv(threat_st_cnt,threat_state_count_out)
 
-burn_cnty_cnt<-burn_cnty_uni %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
-burn_st_cnt<-burn_st_uni %>% group_by(incident_id) %>% summarize(count=n_distinct(GEOID))
+burn_cnty_cnt<-burn_cnty_uni %>% group_by(incident_id) %>% dplyr::summarize(count=n_distinct(GEOID))
+burn_st_cnt<-burn_st_uni %>% group_by(incident_id) %>% dplyr::summarize(count=n_distinct(GEOID))
 
 write.csv(burn_cnty_cnt,burn_county_count_out)
 write.csv(burn_st_cnt,burn_state_count_out)

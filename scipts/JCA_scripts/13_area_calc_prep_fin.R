@@ -57,6 +57,7 @@ nonemptygeoms_burn <- burn_surfman_incid[!st_is_empty(burn_surfman_incid),,drop=
 nonemptygeoms_burn$bort<-"burn"
 nonemptygeoms_burn$brn_ntr<-NULL
 nonemptygeoms_burn$indicator<-NULL #only if kate's samp
+nonemptygeoms_burn$indictr<-NULL
 nonemptygeoms_burn$burn_inter<-NULL #only if kate's samp
 nonemptygeoms_threat <- threat_surfman_incid[!st_is_empty(threat_surfman_incid),,drop=FALSE]
 nonemptygeoms_threat$bort<-"threat"

@@ -24,7 +24,7 @@ write_sf(mtbs_incid,connect_mtbs_incids)
 #make geometries representative of whole incident id/all mtbs footprints
 incid_polys<-mtbs_incid %>%
   group_by(incident_id) %>% 
-  summarize(geometry = st_union(geometry))
+  dplyr::summarize(geometry = st_union(geometry))
 
 
 #dissolve all mtbs footprints to incident id to join to incident level data
@@ -191,7 +191,18 @@ df_cenpl %>%
 #what_i_need$burn_jur_count<-what_i_need$fed_burn_cnt+what_i_need$trib_burn_cnt+what_i_need$st_burn_count+what_i_need$cnty_burn_count+what_i_need$cenpl_burn_count
 #what_i_need$threat_jur_count<-what_i_need$fed_threat_cnt+what_i_need$trib_threat_cnt+what_i_need$st_threat_count+what_i_need$cnty_threat_count+what_i_need$cenpl_threat_count
 
-what_i_need2<-need_ordered %>% mutate(fed_lev_engag=rowSums(select(.,"fed_acre_engag")!=0|select(.,"fed_acre_burn")!=0),trib_lev_engag=rowSums(select(.,"trib_acre_engag")!=0|select(.,"trib_acre_burn")!=0),st_lev_engag=rowSums(select(.,"state_acre_engag")!=0|select(.,"state_acre_burn")!=0),loc_lev_engag=rowSums(select(.,"loc_acre_engag")!=0|select(.,"loc_acre_burn")!=0),priv_lev_engag=rowSums(select(.,"priv_acre_engag")!=0|select(.,"priv_acre_burn")!=0),total_lev_engag = (fed_lev_engag+trib_lev_engag+st_lev_engag+loc_lev_engag+priv_lev_engag))#,burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
+what_i_need2<-need_ordered %>% mutate(fed_lev_engag=rowSums(select(.,"fed_acre_engag")!=0|select(.,"fed_acre_burn")!=0),
+                                      trib_lev_engag=rowSums(select(.,"trib_acre_engag")!=0|select(.,"trib_acre_burn")!=0),
+                                      st_lev_engag=rowSums(select(.,"state_acre_engag")!=0|select(.,"state_acre_burn")!=0),
+                                      loc_lev_engag=rowSums(select(.,"loc_acre_engag")!=0|select(.,"loc_acre_burn")!=0),
+                                      priv_lev_engag=rowSums(select(.,"priv_acre_engag")!=0|select(.,"priv_acre_burn")!=0),
+                                      total_lev_engag = (fed_lev_engag+trib_lev_engag+st_lev_engag+loc_lev_engag+priv_lev_engag),
+                                      fed_lev_burn=rowSums(select(.,"fed_acre_burn")!=0),
+                                      trib_lev_burn=rowSums(select(.,"trib_acre_burn")!=0),
+                                      st_lev_burn=rowSums(select(.,"state_acre_burn")!=0),
+                                      loc_lev_burn=rowSums(select(.,"loc_acre_burn")!=0),
+                                      priv_lev_burn=rowSums(select(.,"priv_acre_burn")!=0),
+                                      total_lev_burn = (fed_lev_burn+trib_lev_burn+st_lev_burn+loc_lev_burn+priv_lev_burn))#,burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
 
 
 #what_i_need2<-need_ordered %>% mutate(burn_fed_lev=rowSums(select(.,"Federal_AcreBurn")!=0),burn_trib_lev=rowSums(select(.,"fed_acre_engag")!=0)|select(.,"fed_acre_burn")!=0)),burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),

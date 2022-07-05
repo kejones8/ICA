@@ -220,11 +220,11 @@ for (i in uni_incids){
   #put_calcs_here$jur_group_fac<-as.factor(put_calcs_here$jur_group)
   
   
-  wut_regburn_perc<-put_burncalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
-  wut_regburn_acre<-put_burncalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% summarize(jur_group_burnacres=sum(areaburned_acres))
+  wut_regburn_perc<-put_burncalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% dplyr::summarize(jur_group_burnperc=sum(percent_burned_area))
+  wut_regburn_acre<-put_burncalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% dplyr::summarize(jur_group_burnacres=sum(areaburned_acres))
  
-  wut_regengag_perc<-put_engagcalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% summarize(jur_group_threatperc=sum(percent_threat_area))
-  wut_regengag_acre<-put_engagcalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% summarize(jur_group_threatacres=sum(areathreatened_acres))
+  wut_regengag_perc<-put_engagcalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% dplyr::summarize(jur_group_threatperc=sum(percent_threat_area))
+  wut_regengag_acre<-put_engagcalcs_here %>% group_by(incident_id,jur_group,.drop=FALSE) %>% dplyr::summarize(jur_group_threatacres=sum(areathreatened_acres))
   
   
    
@@ -374,8 +374,8 @@ for (i in uni_incids){
 #put_calcs_here$jur_group_fac<-as.factor(put_calcs_here$jur_group)
 #return(put_calcs_here)
 
-# wut_reg_perc<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnperc=sum(percent_burned_area))
-# wut_reg_acre<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% summarize(jur_group_burnacres=sum(areaburned_acres))
+# wut_reg_perc<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% dplyr::summarize(jur_group_burnperc=sum(percent_burned_area))
+# wut_reg_acre<-put_calcs_here %>% group_by(incident_id,jur_group_fac,.drop=FALSE) %>% dplyr::summarize(jur_group_burnacres=sum(areaburned_acres))
 # 
 # wide_reg_perc<-as.data.frame(tidyr::pivot_wider(wut_reg_perc, names_from = jur_group_fac, values_from = jur_group_burnperc))
 # wide_reg_acre<-as.data.frame(tidyr::pivot_wider(wut_reg_acre, names_from = jur_group_fac, values_from = jur_group_burnacres))

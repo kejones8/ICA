@@ -12,18 +12,18 @@ inc_withmtbs<-incidents[incidents$LRGST_MTBS_FIRE_INFO!="",]
 nrow(inc_withmtbs)
 
 #make sure wildfires selected
-wfinc_mtbs<-inc_withmtbs[inc_withmtbs$INCTYP_ABBREVIATION %in% c("WF","WFU"),]
+wfinc_mtbs<-inc_withmtbs[inc_withmtbs$INCTYP_ABBREVIATION %in% c("WF","WFU","CX"),]
 length(unique(wfinc_mtbs$INCIDENT_ID))
 
 #make sure the yeras i think are there are there
 range(wfinc_mtbs$START_YEAR) #definitely stops at 2018
 
 #check total acres burned from this sample
-acres_peryear<- wfinc_mtbs %>% group_by(START_YEAR) %>% summarize(sum=sum(FINAL_ACRES))
+acres_peryear<- wfinc_mtbs %>% dplyr::group_by(START_YEAR) %>% dplyr::summarize(final_acres_total=sum(FINAL_ACRES,na.rm=TRUE))
 
 #####MIGHT WANT TO COMPARE TO ENTIRE POPULATION TO SHOW HOW/IF OUR SAMPLE IS REPRESENTATIVE OF THE DATASET for acreage.
 
-ggplot(acres_peryear, aes(x = START_YEAR , y= sum)) +
+ggplot(acres_peryear, aes(x = START_YEAR , y= final_acres_total)) +
   geom_bar( stat = "identity")+ ggtitle("Total Acres Burned per Year")+
   xlab("year")+ ylab("Acres Burned")+ scale_y_continuous(labels = scales::comma)
 
@@ -86,7 +86,7 @@ colnames(incids_mtbs_nonas)[2]<-"mtbs_ids"
 
 addyears<-merge(incids_mtbs_nonas,incid_years,by.x="incident_id",by.y="INCIDENT_ID")
 
-write.csv(addyears,"JCA_K8_Chpt\\data\\k8_incids_mtbsids_notmergedwithmtbsfootprintdownload.csv")
+write.csv(addyears,"K8_Chpt\\data\\k8_incids_mtbsids_notmergedwithmtbsfootprintdownload.csv")
 
 
 

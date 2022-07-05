@@ -116,7 +116,7 @@ mtbs_withincid<-read.csv(jca_samp_in)
 
 #count burned cenpl
 cenpl_burn_incid<-merge(cenpl_burn,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
-count_cenpl_burn<-cenpl_burn_incid %>% group_by(incident_id) %>% summarize(cnt_cenpl_burn=n_distinct(GEOID))
+count_cenpl_burn<-cenpl_burn_incid %>% group_by(incident_id) %>% dplyr::summarize(cnt_cenpl_burn=n_distinct(GEOID))
 
 cenpl_threat_incid<-merge(cenpl_threat,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
 
@@ -133,7 +133,7 @@ threat_cenpl_rmburn<-cenpl_threat_incid[cenpl_threat_incid$torm_inburn==FALSE,]
 threat_cenpl_unique<-unique(threat_cenpl_rmburn[,c("incident_id","GEOID")])
 
 
-count_cenpl_threat<-threat_cenpl_unique %>% group_by(incident_id) %>% summarize(cnt_cenpl_threat=n_distinct(GEOID))
+count_cenpl_threat<-threat_cenpl_unique %>% group_by(incident_id) %>% dplyr::summarize(cnt_cenpl_threat=n_distinct(GEOID))
 
 
 write.csv(count_cenpl_burn,count_cenpl_burn_out)
