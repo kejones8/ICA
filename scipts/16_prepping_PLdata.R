@@ -24,9 +24,10 @@ incidents<-read.csv("data\\oursample.csv")
 years<-as.character(seq(1999,2018,1))
 #assign the column names
 colnames(pl)<-c("Month","Day",years)
+pl_good<-pl[-1,]
 
 #keep month and day, spread years throughout a column
-long_form<-reshape::melt(pl,id.vars=c("Month","Day"))
+long_form<-reshape::melt(pl_good,id.vars=c("Month","Day"))
 #writing out the product of reshaping
 write.csv(long_form,"cleaned_pl_data.csv")
 
@@ -138,7 +139,7 @@ for (i in 1:nrow(uni_inc_withdates)){
   final_date<-uni_inc_withdates[i,"report_to"]
   pl_dates_forinc<-long_form_num_mnth[(as.Date(long_form_num_mnth$year_mnth_day) >= as.Date(disc_date) & as.Date(long_form_num_mnth$year_mnth_day) <= as.Date(final_date)),]
   nonas<-pl_dates_forinc[!is.na(pl_dates_forinc$PL),]
-  pl_tab<-nonas %>% group_by(PL) %>% summarize(count=n_distinct(year_mnth_day))
+  pl_tab<-nonas %>% dplyr::group_by(PL) %>% dplyr::summarize(count=n_distinct(year_mnth_day))
   inc_id_vec<-rep(inc_id,nrow(pl_tab))
   
   inc_id_pl_days<-cbind(inc_id_vec,pl_tab)

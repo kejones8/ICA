@@ -62,7 +62,8 @@ what_i_need$gacc_engag_cnt<-what_i_need$gacc_burn_count+what_i_need$gacc_threat_
 what_i_need$gacc_threat_count<-NULL
 
 
-what_i_need$alljur_engag_cnt<-sum(what_i_need$jur_burned,what_i_need$fed_engag_cnt,what_i_need$trib_engag_cnt,what_i_need$st_engag_cnt,what_i_need$cnty_engag_cnt,what_i_need$cenpl_engag_cnt)
+#what_i_need$alljur_engag_cnt<-sum(what_i_need$jur_burned,what_i_need$fed_engag_cnt,what_i_need$trib_engag_cnt,what_i_need$st_engag_cnt,what_i_need$cnty_engag_cnt,what_i_need$cenpl_engag_cnt,na.rm=TRUE)
+what_i_need<-what_i_need %>% dplyr::mutate(alljur_engag_cnt=  fed_engag_cnt + trib_engag_cnt + st_engag_cnt + cnty_engag_cnt + cenpl_engag_cnt,na.rm=TRUE)
 what_i_need$jur_threatened<-NULL
 names(what_i_need)[names(what_i_need)=="jur_burned"]<-"alljur_burn_cnt"
 names(what_i_need)[names(what_i_need)=="total_ac_burn"]<-"total_acre_burn"
@@ -191,17 +192,17 @@ df_cenpl %>%
 #what_i_need$burn_jur_count<-what_i_need$fed_burn_cnt+what_i_need$trib_burn_cnt+what_i_need$st_burn_count+what_i_need$cnty_burn_count+what_i_need$cenpl_burn_count
 #what_i_need$threat_jur_count<-what_i_need$fed_threat_cnt+what_i_need$trib_threat_cnt+what_i_need$st_threat_count+what_i_need$cnty_threat_count+what_i_need$cenpl_threat_count
 
-what_i_need2<-need_ordered %>% mutate(fed_lev_engag=rowSums(select(.,"fed_acre_engag")!=0|select(.,"fed_acre_burn")!=0),
-                                      trib_lev_engag=rowSums(select(.,"trib_acre_engag")!=0|select(.,"trib_acre_burn")!=0),
-                                      st_lev_engag=rowSums(select(.,"state_acre_engag")!=0|select(.,"state_acre_burn")!=0),
-                                      loc_lev_engag=rowSums(select(.,"loc_acre_engag")!=0|select(.,"loc_acre_burn")!=0),
-                                      priv_lev_engag=rowSums(select(.,"priv_acre_engag")!=0|select(.,"priv_acre_burn")!=0),
+what_i_need2<-need_ordered %>% dplyr::mutate(fed_lev_engag=rowSums(dplyr::select(.,"fed_acre_engag")!=0|dplyr::select(.,"fed_acre_burn")!=0),
+                                      trib_lev_engag=rowSums(dplyr::select(.,"trib_acre_engag")!=0|dplyr::select(.,"trib_acre_burn")!=0),
+                                      st_lev_engag=rowSums(dplyr::select(.,"state_acre_engag")!=0|dplyr::select(.,"state_acre_burn")!=0),
+                                      loc_lev_engag=rowSums(dplyr::select(.,"loc_acre_engag")!=0|dplyr::select(.,"loc_acre_burn")!=0),
+                                      priv_lev_engag=rowSums(dplyr::select(.,"priv_acre_engag")!=0|dplyr::select(.,"priv_acre_burn")!=0),
                                       total_lev_engag = (fed_lev_engag+trib_lev_engag+st_lev_engag+loc_lev_engag+priv_lev_engag),
-                                      fed_lev_burn=rowSums(select(.,"fed_acre_burn")!=0),
-                                      trib_lev_burn=rowSums(select(.,"trib_acre_burn")!=0),
-                                      st_lev_burn=rowSums(select(.,"state_acre_burn")!=0),
-                                      loc_lev_burn=rowSums(select(.,"loc_acre_burn")!=0),
-                                      priv_lev_burn=rowSums(select(.,"priv_acre_burn")!=0),
+                                      fed_lev_burn=rowSums(dplyr::select(.,"fed_acre_burn")!=0),
+                                      trib_lev_burn=rowSums(dplyr::select(.,"trib_acre_burn")!=0),
+                                      st_lev_burn=rowSums(dplyr::select(.,"state_acre_burn")!=0),
+                                      loc_lev_burn=rowSums(dplyr::select(.,"loc_acre_burn")!=0),
+                                      priv_lev_burn=rowSums(dplyr::select(.,"priv_acre_burn")!=0),
                                       total_lev_burn = (fed_lev_burn+trib_lev_burn+st_lev_burn+loc_lev_burn+priv_lev_burn))#,burn_st_lev=rowSums(select(.,"State_AcreBurn")!=0),burn_othloc_lev=rowSums(select(.,"Other_AcreBurn")!=0),burn_priv_lev=rowSums(select(.,"Private_AcreBurn")!=0),
 
 
@@ -249,8 +250,15 @@ incid_info<-merge(what_i_need2,getstartyr,all=TRUE,by="incident_id")
 # incid_info$X.x<-NULL
 # incid_info$X.y<-NULL
 
+incid_info_nodup_geom<-incid_info[!duplicated(incid_info$incident_id),]
+
 incid_info_nodup<-incid_info[!duplicated(incid_info$incident_id),]
+incid_info_nodup$geometry<-NULL
+##wrote this out to get a csv i could quickly query for an incident to make figure 1
+#write.csv(incid_info_nodup,"k8_output14_nogeom.csv")
+
+
 
 #st_write(incid_info,incid_count_area_mtbs_out,delete_layer=TRUE)#,append=FALSE)
-st_write(incid_info_nodup,incid_count_area_mtbs_out2,delete_layer=TRUE)#,append=FALSE)
+st_write(incid_info_nodup_geom,incid_count_area_mtbs_out2,delete_layer=TRUE)#,append=FALSE)
 

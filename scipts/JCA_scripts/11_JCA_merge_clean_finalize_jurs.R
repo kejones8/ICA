@@ -86,13 +86,13 @@ fed_merged <- Reduce(function(...) merge(...,by="incident_id", all=T), list(fed_
 
 #sum federal burned counts
 fed_merged<-fed_merged %>% 
-  rowwise() %>% 
-  mutate(fed_burn_cnt = sum(usfs_burn_count, nps_burn_count,usfws_burn_count,tva_burn_count,bor_burn_count,
+  dplyr::rowwise() %>% 
+  dplyr::mutate(fed_burn_cnt = sum(usfs_burn_count, nps_burn_count,usfws_burn_count,tva_burn_count,bor_burn_count,
                             doe_burn_count,dod_burn_count,blm_burn_count, na.rm = TRUE))
 #sum federal threatened counts
 fed_merged<-fed_merged %>% 
-  rowwise() %>% 
-  mutate(fed_threat_cnt = sum(usfs_threat_count, nps_threat_count,usfws_threat_count,tva_threat_count,bor_threat_count,
+  dplyr::rowwise() %>% 
+  dplyr::mutate(fed_threat_cnt = sum(usfs_threat_count, nps_threat_count,usfws_threat_count,tva_threat_count,bor_threat_count,
                             doe_threat_count,dod_threat_count,blm_threat_count, na.rm = TRUE))
 
 #table with incident_ids & federal burned & threatened counts
@@ -133,13 +133,13 @@ trib_merged <- Reduce(function(...) merge(...,by="incident_id", all=T), list(tri
 
 #sum federal burned counts
 trib_merged<-trib_merged %>% 
-  rowwise() %>% 
-  mutate(trib_burn_cnt = sum(ancsa_burn_count,othtrib_burn_count,bia_burn_count, na.rm = TRUE))
+  dplyr::rowwise() %>% 
+  dplyr::mutate(trib_burn_cnt = sum(ancsa_burn_count,othtrib_burn_count,bia_burn_count, na.rm = TRUE))
 
 #sum federal threatened counts
 trib_merged<-trib_merged %>% 
-  rowwise() %>% 
-  mutate(trib_threat_cnt = sum(ancsa_threat_count, othtrib_threat_count,bia_threat_count, na.rm = TRUE))
+  dplyr::rowwise() %>% 
+  dplyr::mutate(trib_threat_cnt = sum(ancsa_threat_count, othtrib_threat_count,bia_threat_count, na.rm = TRUE))
 
 #table with incident_ids & federal burned & threatened counts
 trib_counts<-trib_merged[,c("incident_id","trib_burn_cnt","trib_threat_cnt")]

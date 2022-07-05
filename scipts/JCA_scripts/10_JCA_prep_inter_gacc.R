@@ -65,11 +65,17 @@ proc.time() - ptm
 #and remove threatened gaccs that are already represented in burned gaccs 
 mtbs_incid<-read.csv(jca_samp_in)
 
-threat_gacc_incid<-merge(threat_gacc,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
-burn_gacc_incid<-merge(burn_gacc,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
+threat_gacc$geometry<-NULL
+burn_gacc$geometry<-NULL
 
-threat_gacc_incid$geometry<-NULL
-burn_gacc_incid$geometry<-NULL
+threat_gacc_incid_bleh<-merge(threat_gacc,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
+burn_gacc_incid_bleh<-merge(burn_gacc,mtbs_incid,by.x="Event_ID",by.y="mtbs_ids")
+
+#get the incident ids that are only in our sample 
+incid_we_want<-unique(mtbs_incid$incident_id)
+
+threat_gacc_incid<-threat_gacc_incid_bleh[threat_gacc_incid_bleh$incident_id %in% incid_we_want,]
+burn_gacc_incid<-burn_gacc_incid_bleh[burn_gacc_incid_bleh$incident_id %in% incid_we_want,]
 
 
 #now that the above operations have been run, we want to remove any ids from the threatened that already appear in burned
@@ -85,10 +91,10 @@ threat_gacc_rmburn<-threat_gacc_incid[threat_gacc_incid$torm_inburn==FALSE,]
 threat_gacc_unique<-unique(threat_gacc_rmburn[,c("incident_id","GACCAbbrev")])
 
 
-threat_blm_cnt<-threat_gacc_unique %>% group_by(incident_id) %>% dplyr::summarize(cnt_gacc_threat=n_distinct(GACCAbbrev))
+threat_gacc_cnt<-threat_gacc_unique %>% group_by(incident_id) %>% dplyr::summarize(cnt_gacc_threat=n_distinct(GACCAbbrev))
 
 
-write.csv(threat_blm_cnt,threat_gacc_count_out)
+write.csv(threat_gacc_cnt,threat_gacc_count_out)
 
 burn_gacc_unique<-unique(burn_gacc_incid[,c("incident_id","GACCAbbrev")])
 
