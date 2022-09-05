@@ -13,6 +13,7 @@
 #8. a csv list of incidents that should include state/county lands in threatened jur total (i.e. threatened non-federal land)
 
 
+
 #load libraries
 library(sf)
 library(dplyr)
@@ -69,25 +70,37 @@ surf_inters_threat<-surf_dointersect[surf_dointersect$threat_inter==TRUE,]
 
 #then for each of those surf_man TRUE polygons, subset and do the actual intersection with those
 
+burned_tointer<-unique(burned_proj$Event_ID)
+
+#burn_surfman_inter_par <- function(burned_tointer,surf_inters_burn,burned_proj){
 #first do burned intersection
-registerDoParallel(makeCluster(12))
+#registerDoParallel(makeCluster(12))
+#registerDoFuture()
 ptm <- proc.time()
 print(Sys.time())
 
-burned_tointer<-unique(burned_proj$Event_ID)
+#p <- progressor(along = burned_tointer)
+
+
 
 #for every burned area mtbs footprint, intersect with surface management 
 #write out combined sf object with all intersections
-burn_intersected<-foreach(i=burned_tointer, .combine = rbind, .packages=c('sf')) %dopar%  {
+burn_intersected<-foreach(i=burned_tointer, .combine = rbind, .packages=c('sf')) %dopar% {
   
   fp<-burned_proj[burned_proj$Event_ID==i,]
   mang_forburns<-st_intersection(fp,surf_inters_burn)#5 miles = 8047 meters
-  
+  #p(sprintf("x=%g", i))
+  #p()
 }
+
 print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
 
+print("finished parallel intersect of burned area with surfman")
+
+#with_progress(out<-burn_surfman_inter_par(burned_tointer,surf_inters_burn,burned_proj))
+  
 #write_sf
 
 #toconnectincandmtbs<-read_sf(burn_surfman_inter_out)
@@ -96,21 +109,33 @@ whatitdo_burn<-merge(burn_intersected,mtbs_withincid,by.x="Event_ID","mtbs_ids")
 
 write_sf(whatitdo_burn,burn_surfman_inter_out,overwrite=TRUE)
 
+whatitdo_burn<-read_sf(burn_surfman_inter_out)
 #writes out a shapefile with all mtbs footprints and the surf management polygons they intersect
 #write_sf(burn_intersected,burn_surfman_inter_out,overwrite=TRUE)
+#same steps as above with burned data
 
-#now want to join this with a list of mtbsids by INCIDENT_IDs
-#this links all jurisdictional data to INCIDENT_ID
-#whatitdo_burn<-merge(burn_intersected,mtbs_withincid,by.x="Event_ID","mtbs_ids")
+######when read back in colnames
+#use if reread in whatitdo_threat, troubleshooting on 07/18/22
+burn_inter_trimmed<-whatitdo_burn[,c("incdnt_","Evnt_ID","START_Y","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]
+colnames(burn_inter_trimmed)<-c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")
+
+###
+burn_df<-st_drop_geometry(burn_inter_trimmed)
+
+burn_df2<-burn_df[,1:length(colnames(burn_df))-1]
+#threat_df<-as.data.frame(threat_inter_trimmed)
+#threat_df$NA<-NULL
+burned_jurs_unique<-unique(burn_df2)
 
 #grab the columns we need for jurisdictional work 
-burn_inter_trimmed<-whatitdo_burn[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","burn_inter")]
-st_geometry(burn_inter_trimmed)<-NULL #get rid of the geom column 
+#burn_inter_trimmed<-whatitdo_burn[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","burn_inter")]
+#st_geometry(burn_inter_trimmed)<-NULL #get rid of the geom column 
 #do unique across incident_id, mtbs_id, and jurisdictional information
-burned_jurs_unique<-unique(burn_inter_trimmed[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")])
+#burned_jurs_unique<-unique(burn_inter_trimmed[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")])
 
 #write out a list of burned, unique jurisdictions
 write.csv(burned_jurs_unique,burn_juris_byincid_out)
+
 
 #then do threatened intersection
 
@@ -138,9 +163,12 @@ proc.time() - ptm
 
 whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
 
+print("finished parallel intersect of threatened (engaged) area with surfman")
+
 #threat_intersected<-read_sf(threat_surfman_inter_out)
 #write out all surfman polygons intersected wtih individual threatened areas
 write_sf(whatitdo_threat,threat_surfman_inter_out,overwrite=TRUE)
+#whatitdo_threat<-read_sf(threat_surfman_inter_out)
 #threat_intersected<-read_sf(threat_surfman_inter_out)
 #threat_intersected<-read_sf(threat_surfman_inter_out)
 
@@ -149,13 +177,36 @@ write_sf(whatitdo_threat,threat_surfman_inter_out,overwrite=TRUE)
 #whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
 
 #same steps as above with burned data
-threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC","burn_inter","threat_inter")]
-threat_inter_trimmed$geometry<-NULL
-threatened_jurs_unique<-unique(threat_inter_trimmed)
+threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]#,"burn_inter","threat_inter")]
+###
+#use if reread in whatitdo_threat, troubleshooting on 07/18/22
+#threat_inter_trimmed<-whatitdo_threat[,c("incdnt_","Evnt_ID","START_Y","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]#,"brn_ntr","thrt_nt")]
+colnames(threat_inter_trimmed)<-c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")#,"burn_inter","threat_inter")
+
+###
+threat_df<-st_drop_geometry(threat_inter_trimmed)
+threat_df2<-threat_df[,1:length(colnames(threat_df))-1]
+#threat_df<-as.data.frame(threat_inter_trimmed)
+#threat_df$NA<-NULL
+threatened_jurs_unique<-unique(threat_df2)
 
 ##EXTRA step required for threatened data becauase we want mutually exclusive lists
 #only include in threatened list jurisdictions that were not already burned
-only_threat<-threatened_jurs_unique[threatened_jurs_unique$burn_inter==FALSE,]
+
+
+###This is where i need to sort out existing jur combos form burned_jurs_unique
+only_threat<-dplyr::anti_join(threatened_jurs_unique, burned_jurs_unique, by=c('incident_id', 'JrsdcUK','JrsdcUA','JrsdcUN'))
+
+
+
+#only_threat<-threatened_jurs_unique[threatened_jurs_unique$burn_inter==FALSE,] ##this was WRONG.
+
+#####THIS STEP IS DONE WRONG - I NEED TO REMOVE ONLY BURNED FROM THE SAME INCIDENT....IN THE CASE OF THE GARNER, I HAVE USFS LISTED AS 
+#####BURNED< BUT IT WASN't ON THAT INCIDENT - I JUST TOOK TEH GENRAL burn_inter==FALSE  :(
+#### I ALSO MANAGED TO HAVE the SAME medford blm district show up as intersected burned and not intersected bured - think thi was a product of 
+##### reviewing indivudal geoemtries, but i only needed those columsn for intersecting...so need to filter out the faulty logic 
+
+
 write.csv(only_threat,threat_juris_byincid_out)
 
 # #removed this stuff because it doesn't capture what i need for sates/counties

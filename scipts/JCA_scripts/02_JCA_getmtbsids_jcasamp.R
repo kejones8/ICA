@@ -69,6 +69,8 @@ howmanynomatch<-length(unique(mtbs_toget))-nrow(select_mtbs)
 
 #which footprint weren't found
 notfound<-mtbs_toget[mtbs_toget %notin% all_mtbs$Event_ID]
+incidents_removed<-jca_samp$incident_id[jca_samp$mtbs_ids %notin% all_mtbs$Event_ID]
+incidents_kept<-jca_samp$incident_id[jca_samp$mtbs_ids %in% all_mtbs$Event_ID]
 
 #which incidents drop out of my sample becuase no footprints were found
 #removedfromsamp<-mysample[mysample$mtbs_ids %in% notfound,] #208 footprints not found

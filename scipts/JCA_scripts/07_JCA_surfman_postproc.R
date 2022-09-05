@@ -17,7 +17,8 @@ end<-ncol(threat)
 threat_up<-threat[,-c(end-1,end)] #remove previous columns written out into csv
 threat_up$burn_threat<-"threat"
 colnames(threat_up)[3]<-c("Event_ID") #make sure spelling is correct
-
+burn$LndwnrC<-NULL
+burn$LndwnrK<-NULL
 
 # if same structure, make them into one df for processing
 inc_juris<-rbind(burn,threat_up)
@@ -143,7 +144,6 @@ write.csv(nps_count_burn,nps_burn_count_out)
 write.csv(nps_count_threat,nps_threat_count_out)
 
 #USFS
-#first, do some cleaning for USFS - the Sumter
 usfs<-inc_juris %>% filter(JrsdcUA=="USFS")
 usfs_burn<-fed_burn %>% filter(JrsdcUA=="USFS")
 usfs_threat<-fed_threat_burnrm%>% filter(JrsdcUA=="USFS")

@@ -243,7 +243,7 @@ what_i_need2<-need_ordered %>% dplyr::mutate(fed_lev_engag=rowSums(dplyr::select
 getstartyr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
 
 #incid_info<-merge(what_i_need,what_i_need_arealev,by="incident_id",all=TRUE)
-incid_info<-merge(what_i_need2,getstartyr,all=TRUE,by="incident_id")
+incid_info<-merge(what_i_need2,getstartyr,all.x=TRUE,by="incident_id")
 
 #look_at_4lvl_burnthrt<-incid_info[incid_info$threat_jur_level_cnt==4 |incid_info$burn_jur_level_cnt==4,c("incident_id","START_YEAR","burn_jur_level_cnt","threat_jur_level_cnt")]
 

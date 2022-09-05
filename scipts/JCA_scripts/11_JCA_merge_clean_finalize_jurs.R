@@ -195,6 +195,7 @@ jur_counts <- Reduce(function(...) merge(...,by="incident_id", all=T), list(fed_
 inc_jur_counts<-jur_counts[!is.na(jur_counts$incident_id),]
 inc_jur_counts[is.na(inc_jur_counts)] <- 0
 inc_jur_counts$jur_burned<-inc_jur_counts$fed_burn_cnt+inc_jur_counts$trib_burn_cnt+inc_jur_counts$st_burn_count+inc_jur_counts$cnty_burn_count+inc_jur_counts$cenpl_burn_count
+#this was before we changed it to engaged, but I left it as threatened because the subsequent codes read it as such - but then change it to engaged counts for final table out
 inc_jur_counts$jur_threatened<-inc_jur_counts$fed_threat_cnt+inc_jur_counts$trib_threat_cnt+inc_jur_counts$st_threat_count+inc_jur_counts$cnty_threat_count+inc_jur_counts$cenpl_threat_count
 
 write.csv(inc_jur_counts,final_out)

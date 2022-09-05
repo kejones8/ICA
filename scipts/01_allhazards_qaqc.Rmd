@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #CSV can be retrieved from FC shared google drive in data\allhazards folders
 knitr::opts_knit$set(root.dir = 'C:\\Users\\thebrain\\Dropbox\\FireChasers\\ICA_repo\\ICA')
 
+options(scipen=999)
+
 #load libraries
 library(tidyverse) #generally things that involves %>% operators
 library(data.table)
@@ -101,9 +103,6 @@ ggplot(inc_peryear_comp, aes(x = START_YEAR , y= n, fill=COMPLEX)) +
 ```
 
 
-**\textcolor{red}{1. INVESTIGATE WHY NO COMPLEXES IN LATER YEARS (look in the wildfire incidents csv)}**
-
-
 
 # Checking fire size (in acres) 
 
@@ -157,9 +156,14 @@ nrow(type12_wf_inc_nimo[is.na(type12_wf_inc_nimo$FOD_DISCOVERY_DOY),])
 #only look at fires that don't have nas for cont. & disc. DOY data
 no_doy_na<-type12_wf_inc_nimo[!is.na(type12_wf_inc_nimo$FOD_DISCOVERY_DOY) & !is.na(type12_wf_inc_nimo$FOD_CONTAIN_DOY),]
 
+num_withdoy<-nrow(no_doy_na)
+
 
 #create length of fire variable in days
 no_doy_na$LNGTH_FIRE_DAYS<-no_doy_na$FOD_CONTAIN_DOY - no_doy_na$FOD_DISCOVERY_DOY
+
+coy_equals_doy<-nrow(no_doy_na[no_doy_na$FOD_CONTAIN_DOY==no_doy_na$FOD_DISCOVERY_DOY,])
+
 
 #checkig how many fires we have whereh containment DOY is less than DISCOVERY_DOY
 nrow(no_doy_na[no_doy_na$LNGTH_FIRE_DAYS<0,])
@@ -177,11 +181,13 @@ hist(no_doy_na$LNGTH_FIRE_DAYS,breaks=365,main="Count of Incidents by Fire Lengt
 write.csv(no_doy_na,"check_this_for_incident_lengthindays.csv")
 
 
+
+
 ```
 
-Of note,`r under10` (of the fires with DOY data) of `r num_type12nimo` last less than 10 days. `r under5` fires last less than 5 days. This may be expected with high suppression Typ1/2 operations, just thought it was worth noting.
+Of note,the`r num_type12nimo` in the ICA sample, `r num_withdoy` have containment date & discovery date data. Of these`r num_withdoy`, `r coy_equals_doy` have the same day of the year for containment and discovery. Likely discard these? There are `r under5` fires under 10 days and  `r under5` fires last less than 5 days. This may be expected with high suppression Typ1/2 operations?
 
-**\textcolor{red}{3. INVESTIGATE THE FIRES THAT HAVE REALLY LONG AND SHORT LENGTHS}**
+
 **The csv "check_this_for_incident_lengthindays.csv" will be written out in the same folder that  you run this code.**
 
 # Looking at FOD number of fires associated to each incident
@@ -199,7 +205,7 @@ hist(type12_wf_inc_nimo$FOD_FIRE_NUM,breaks=25,main="Count of Incidents by the N
 
 There are `r howmany_nas` incidents with no FOD_FIRES associated (where the FOD_FIRE_NUM columns is NA). Want to take a look at these fires, I think. Would be good to know just how many of our sample for ICA might not link to FOD database. This COULD be explained by the incidents from 2018-2020 not being linked to FOD yet. 
 
-**\textcolor{red}{4. INVESTIGATE INCIDENTS THAT SHOW NA FOR fodfirenum \& INCIDENTS THAT HAVE GREATER THAN 10 FOR forfirenum. ALSO, MAKE SURE THAT NON-COMPLEX INCIDENTS ONLY HAVE AN forfirenum OF 1.}**
+**\textcolor{red}{4. INVESTIGATE INCIDENTS THAT SHOW NA FOR fodfirenum \& INCIDENTS THAT HAVE GREATER THAN 10 FOR forfirenum. ALSO, MAKE SURE THAT NON-COMPLEX INCIDENTS ONLY HAVE A "forfirenum" OF 1.}**
 
 # Structures Damaged
 **## Now, we want to look at the structures *damaged* data just to get an idea if the changes in recording through time appear in our data. Can do a deeper dive later.**

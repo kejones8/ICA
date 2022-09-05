@@ -33,33 +33,36 @@ colnames(burn_surfman)[1]<-"Evnt_ID"
 burn_surfman_incid<-merge(burn_surfman,mysamp,by.x="Evnt_ID",by.y="mtbs_ids",all=TRUE)
 threat_surfman_incid<-merge(threat_surfman,mysamp,by.x="Evnt_ID",by.y="mtbs_ids",all=TRUE)#note column name change
 
+bsman_incid_nona <- burn_surfman_incid[!is.na(row.names(burn_surfman_incid)),]
+tsman_incid_nona <- threat_surfman_incid[!is.na(row.names(threat_surfman_incid)),]
+
 
 #now, make new column in burned & threatened that designates area category assignment
-burn_surfman_incid$area_cat<-NA
-threat_surfman_incid$area_cat<-NA
+bsman_incid_nona$area_cat<-NA
+tsman_incid_nona$area_cat<-NA
 
 #assigning areas to categories we want to tally
-burn_surfman_incid$area_cat[burn_surfman_incid$JrsdcUA %in% fed]<-"fed"
-burn_surfman_incid$area_cat[burn_surfman_incid$JrsdcUA %in% state]<-"state"
-burn_surfman_incid$area_cat[burn_surfman_incid$JrsdcUA %in% trib]<-"trib"
-burn_surfman_incid$area_cat[burn_surfman_incid$JrsdcUA %in% local]<-"loc"
-burn_surfman_incid$area_cat[burn_surfman_incid$JrsdcUA %in% priv]<-"priv"
+bsman_incid_nona$area_cat[bsman_incid_nona$JrsdcUA %in% fed]<-"fed"
+bsman_incid_nona$area_cat[bsman_incid_nona$JrsdcUA %in% state]<-"state"
+bsman_incid_nona$area_cat[bsman_incid_nona$JrsdcUA %in% trib]<-"trib"
+bsman_incid_nona$area_cat[bsman_incid_nona$JrsdcUA %in% local]<-"loc"
+bsman_incid_nona$area_cat[bsman_incid_nona$JrsdcUA %in% priv]<-"priv"
 
 #assigning areas to categories we want to tally
-threat_surfman_incid$area_cat[threat_surfman_incid$JrsdcUA %in% fed]<-"fed"
-threat_surfman_incid$area_cat[threat_surfman_incid$JrsdcUA %in% state]<-"state"
-threat_surfman_incid$area_cat[threat_surfman_incid$JrsdcUA %in% trib]<-"trib"
-threat_surfman_incid$area_cat[threat_surfman_incid$JrsdcUA %in% local]<-"loc"
-threat_surfman_incid$area_cat[threat_surfman_incid$JrsdcUA %in% priv]<-"priv"
+tsman_incid_nona$area_cat[tsman_incid_nona$JrsdcUA %in% fed]<-"fed"
+tsman_incid_nona$area_cat[tsman_incid_nona$JrsdcUA %in% state]<-"state"
+tsman_incid_nona$area_cat[tsman_incid_nona$JrsdcUA %in% trib]<-"trib"
+tsman_incid_nona$area_cat[tsman_incid_nona$JrsdcUA %in% local]<-"loc"
+tsman_incid_nona$area_cat[tsman_incid_nona$JrsdcUA %in% priv]<-"priv"
 
 #get the nonempty geometries, clean up anything that won't return area
-nonemptygeoms_burn <- burn_surfman_incid[!st_is_empty(burn_surfman_incid),,drop=FALSE]
+nonemptygeoms_burn <- bsman_incid_nona[!st_is_empty(bsman_incid_nona),,drop=FALSE]
 nonemptygeoms_burn$bort<-"burn"
 nonemptygeoms_burn$brn_ntr<-NULL
 nonemptygeoms_burn$indicator<-NULL #only if kate's samp
 nonemptygeoms_burn$indictr<-NULL
 nonemptygeoms_burn$burn_inter<-NULL #only if kate's samp
-nonemptygeoms_threat <- threat_surfman_incid[!st_is_empty(threat_surfman_incid),,drop=FALSE]
+nonemptygeoms_threat <- tsman_incid_nona[!st_is_empty(tsman_incid_nona),,drop=FALSE]
 nonemptygeoms_threat$bort<-"threat"
 nonemptygeoms_threat$brn_ntr<-NULL
 nonemptygeoms_threat$thrt_nt<-NULL
@@ -108,8 +111,8 @@ jur_counts<-read.csv(final_out)
 burn_engag_tab<-calc_areas(uni_incids,nonemptygeoms)#,burn_perc_colnames,burn_acre_colnames,engag_perc_colnames,engag_acre_colnames)
 
 
-# burned_areas_tab<-calc_areas(burn_uni_incid,nonemptygeoms_burn,burn_perc_colnames,burn_acre_colnames)
-# threat_areas_tab<-calc_areas(threat_uni_incid,nonemptygeoms_threat,threat_perc_colnames,threat_acre_colnames)
+#burned_areas_tab<-calc_areas(burn_uni_incid,nonemptygeoms_burn,burn_perc_colnames,burn_acre_colnames)
+#threat_areas_tab<-calc_areas(threat_uni_incid,nonemptygeoms_threat,threat_perc_colnames,threat_acre_colnames)
 #threat_jump<-calc_areas("1999_AZ-ASD-C142_JUMP COMPLEX",jump_threat,threat_perc_colnames,threat_acre_colnames)
 #threat_rainbow<-calc_areas("1999_AZ-FTA-172_RAINBOW",rb_threat,threat_perc_colnames,threat_acre_colnames)
 
