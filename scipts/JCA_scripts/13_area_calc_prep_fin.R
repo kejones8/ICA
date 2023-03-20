@@ -68,7 +68,11 @@ nonemptygeoms_threat$brn_ntr<-NULL
 nonemptygeoms_threat$thrt_nt<-NULL
 nonemptygeoms_threat$indictr<-NULL #only if kate's samp
 
+
+
 colnames(nonemptygeoms_threat)<-colnames(nonemptygeoms_burn)
+
+
 
 #get everything all together so just need to sort in in the calc_area function
 nonemptygeoms<-rbind(nonemptygeoms_burn,nonemptygeoms_threat)
@@ -80,11 +84,14 @@ nonemptygeoms<-rbind(nonemptygeoms_burn,nonemptygeoms_threat)
 # burn_surfman_incid[st_is_empty(burn_surfman_incid),]
 # threat_surfman_incid[st_is_empty(threat_surfman_incid),]
 
+#essentially, at this point, want to remove any incident_ids that don't have nonempty geoms in both burned & threatened
+commonids<-intersect(unique(nonemptygeoms_burn$incident_id),unique(nonemptygeoms_threat$incident_id))
+
 
 #unique incident_ids burned
 # burn_uni_incid<-unique(nonemptygeoms_burn$incident_id)
 # threat_uni_incid<-unique(nonemptygeoms_threat$incident_id)
-uni_incids<-unique(nonemptygeoms$incident_id)
+uni_incids<-commonids
 
 
 #to get unique incident_ids for threatened, want to remove any incident_ids where zero jurisdictions were threatened

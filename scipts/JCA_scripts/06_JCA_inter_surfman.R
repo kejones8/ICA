@@ -49,7 +49,7 @@ surf_dointersect<-surfman_buf[surfman_buf$indicator==TRUE,]
 #for every year we have burned and threatened footprints
 #read in burned
 burned<-st_read(select_mtbs_out)
-burned_proj<-st_transform(burned,5070)
+burned_proj<-st_make_valid(st_transform(burned,5070))
 
 #do the st_intersects again and write out and indicator column
 surf_dointersect$burn_inter<-st_intersects(surf_dointersect, burned_proj) %>% lengths > 0
@@ -58,13 +58,7 @@ surf_inters_burn<-surf_dointersect[surf_dointersect$burn_inter==TRUE,]
 #write out just the surfman polygons that will get intersected with burned areas
 #write_sf(surf_inters_burn,"data\\surf_thatintersect_burn.shp")
 
-#read in threatened
-threat<-st_read(threat_work_out)
-threat_proj<-st_transform(threat,5070)
 
-#do the st_intersects again and write out and indicator column
-surf_dointersect$threat_inter<-st_intersects(surf_dointersect, threat_proj) %>% lengths > 0
-surf_inters_threat<-surf_dointersect[surf_dointersect$threat_inter==TRUE,]
 #write out just the surfman polygons that will get intersected with threatened areas
 #write_sf(surf_inters_threat,"data\\surf_thatintersect_thr.shp")
 
@@ -74,8 +68,8 @@ burned_tointer<-unique(burned_proj$Event_ID)
 
 #burn_surfman_inter_par <- function(burned_tointer,surf_inters_burn,burned_proj){
 #first do burned intersection
-#registerDoParallel(makeCluster(12))
-#registerDoFuture()
+cl<-makeCluster(12)
+registerDoParallel(cl)
 ptm <- proc.time()
 print(Sys.time())
 
@@ -109,14 +103,18 @@ whatitdo_burn<-merge(burn_intersected,mtbs_withincid,by.x="Event_ID","mtbs_ids")
 
 write_sf(whatitdo_burn,burn_surfman_inter_out,overwrite=TRUE)
 
-whatitdo_burn<-read_sf(burn_surfman_inter_out)
+gc()
+
+#whatitdo_burn<-read_sf(burn_surfman_inter_out)
 #writes out a shapefile with all mtbs footprints and the surf management polygons they intersect
 #write_sf(burn_intersected,burn_surfman_inter_out,overwrite=TRUE)
 #same steps as above with burned data
 
 ######when read back in colnames
 #use if reread in whatitdo_threat, troubleshooting on 07/18/22
-burn_inter_trimmed<-whatitdo_burn[,c("incdnt_","Evnt_ID","START_Y","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]
+burn_inter_trimmed<-whatitdo_burn[,c("incident_id","Event_ID","start_year","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]
+
+#burn_inter_trimmed<-whatitdo_burn[,c("incdnt_","Evnt_ID","START_Y","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]
 colnames(burn_inter_trimmed)<-c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")
 
 ###
@@ -137,6 +135,17 @@ burned_jurs_unique<-unique(burn_df2)
 write.csv(burned_jurs_unique,burn_juris_byincid_out)
 
 
+burned_jurs_unique<-read.csv(burn_juris_byincid_out)
+#read in threatened
+threat<-st_read(threat_work_out)
+threat_proj<-st_make_valid(st_transform(threat,5070))
+
+#do the st_intersects again and write out and indicator column
+surf_dointersect$threat_inter<-st_intersects(surf_dointersect, threat_proj) %>% lengths > 0
+surf_inters_threat<-surf_dointersect[surf_dointersect$threat_inter==TRUE,]
+
+surf_inters_threat_buf<-st_buffer(surf_inters_threat,0)
+
 #then do threatened intersection
 
 #just for good measure because these shapes were made with additional geometeric operations
@@ -154,12 +163,15 @@ threat_tointer<-unique(threat_buf$Event_ID)
 threat_intersected<-foreach(i=threat_tointer, .combine = rbind, .packages=c('sf')) %dopar%  {
   
   fp_threat<-threat_buf[threat_buf$Event_ID==i,]
-  mang_forthreat<-st_intersection(fp_threat,surf_inters_threat)#5 miles = 8047 meters
+  mang_forthreat<-st_intersection(fp_threat,surf_inters_threat_buf)#5 miles = 8047 meters
   
 }
 print(Sys.time())
 stopImplicitCluster()
 proc.time() - ptm
+
+
+####did the parallel process work? 12/14/2022
 
 whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Event_ID",by.y="mtbs_ids")
 
@@ -177,7 +189,7 @@ write_sf(whatitdo_threat,threat_surfman_inter_out,overwrite=TRUE)
 #whatitdo_threat<-merge(threat_intersected,mtbs_withincid,by.x="Evnt_ID",by.y="mtbs_ids")
 
 #same steps as above with burned data
-threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Event_ID","START_YEAR","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]#,"burn_inter","threat_inter")]
+threat_inter_trimmed<-whatitdo_threat[,c("incident_id","Event_ID","start_year","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]#,"burn_inter","threat_inter")]
 ###
 #use if reread in whatitdo_threat, troubleshooting on 07/18/22
 #threat_inter_trimmed<-whatitdo_threat[,c("incdnt_","Evnt_ID","START_Y","JrsdcUK","JrsdcUA","JrsdcUN","JrsdcUI","LndwnrK","LndwnrC")]#,"brn_ntr","thrt_nt")]

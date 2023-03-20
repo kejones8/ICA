@@ -5,15 +5,16 @@ library(foreach) #for parallelizing intersection
 library(doParallel)
 
 bia<-read_sf("data\\BIA_Regions.shp\\BIA_Regions.shp")
+print("hi")
 bia_proj<-st_transform(bia,5070)
-bia_buf<-st_buffer(bia_proj,0)
+bia_buf<-st_make_valid(st_buffer(bia_proj,0))
 
 get_ids<-bia_buf[11:23,c("RegionID")]
 get_ids$geometry<-NULL
 bia_sel<-bia_buf[bia_buf$RegionID %in% get_ids$RegionID,]
 ###READ in the correct file
 blm<-read_sf("data\\BLM_National_Administrative_Unit_B.gdb\\blm_district_clean2\\blm_district_clean2.shp")
-blm_proj<-st_transform(blm,5070)
+blm_proj<-st_make_valid(st_transform(blm,5070))
 #blm_buf<-st_buffer(blm_proj,0)
 
 #read in spatial file that grabs all surfman that intersect burned and threatened areas
@@ -42,11 +43,11 @@ surfman_threat_blm_regions<-st_intersection(surfman_threat_blm,blm_proj)
 
 #read in mtbs burned area our sample footprints
 mtbs_burn<-read_sf(select_mtbs_out)
-burn_proj<-st_transform(mtbs_burn,5070)
+burn_proj<-st_make_valid(st_transform(mtbs_burn,5070))
 #read in mtbs threatened area our sample 
 mtbs_threat<-read_sf(threat_work_out)
 threat_proj<-st_transform(mtbs_threat,5070)
-threat_buf<-st_buffer(threat_proj,0)
+threat_buf<-st_make_valid(st_buffer(threat_proj,0))
 
 
 #first do burned intersection with state

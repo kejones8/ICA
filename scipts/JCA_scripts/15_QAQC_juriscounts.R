@@ -20,7 +20,7 @@ which_high_cenplfires<-nodups_nas[nodups_nas$cenpl_burn_cnt==range(nodups_nas$ce
 toinvestigate<-rbind(which_high_fedfires,which_high_stfires,which_high_tribfires,which_high_cntyfires,which_high_cenplfires)
 toinvestigate$geom<-NULL
 df<-as.data.frame(toinvestigate)
-write.csv(df,"data\\JCA\\incidents_toJCA_QAQC_0629.csv")
+write.csv(df,"data\\JCA\\incidents_toJCA_QAQC_032023.csv")
 
 
  

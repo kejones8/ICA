@@ -42,7 +42,7 @@ tab_merged<-merge(jur_counts,jur_area,by="incident_id",all=TRUE)
 #merge it all together
 what_i_need<-merge(incid_polys,tab_merged,by="incident_id")
 
-#after making changes from burn - threat to burn - engage need to restructure and name many coluns 
+#after making changes from burn - threat to burn - engage need to restructure and name many columns 
 what_i_need$X.x<-NULL
 what_i_need$X.y<-NULL
 what_i_need$fed_engag_cnt<-what_i_need$fed_burn_cnt+what_i_need$fed_threat_cnt
@@ -240,7 +240,7 @@ what_i_need2<-need_ordered %>% dplyr::mutate(fed_lev_engag=rowSums(dplyr::select
 #what_i_need4$threat_jur_level_cnt<-what_i_need4$threat_jur_level_fst+what_i_need4$threat_actual_cntcen
 
 #add start year back in
-getstartyr<-link_mtbs_incids[,c("incident_id","START_YEAR")]
+getstartyr<-link_mtbs_incids[,c("incident_id","start_year")]
 
 #incid_info<-merge(what_i_need,what_i_need_arealev,by="incident_id",all=TRUE)
 incid_info<-merge(what_i_need2,getstartyr,all.x=TRUE,by="incident_id")

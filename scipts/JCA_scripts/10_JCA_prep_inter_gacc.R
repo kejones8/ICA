@@ -12,6 +12,7 @@ gacc_buf<-st_buffer(gacc_proj,0)
 #read in mtbs burned area our sample footprints
 mtbs_burn<-read_sf(select_mtbs_in)
 burn_proj<-st_transform(mtbs_burn,5070)
+burn_buf<-st_transform(burn_proj,5070)
 #read in mtbs threatened area our sample 
 mtbs_threat<-read_sf(threat_work_out)
 threat_proj<-st_transform(mtbs_threat,5070)
@@ -23,14 +24,15 @@ registerDoParallel(makeCluster(12))
 ptm <- proc.time()
 print(Sys.time())
 
-burn_ids<-unique(burn_proj$Event_ID)
+burn_ids<-unique(burn_buf$Event_ID)
 
 #for every burned area mtbs footprint, intersect with surface management 
 #write out combined sf object with all intersections
 burn_gacc<-foreach(i=burn_ids, .combine = rbind, .packages=c('sf')) %dopar%  {
   
-  fp<-burn_proj[burn_proj$Event_ID==i,]
-  gacc_forburns<-st_intersection(fp,gacc_buf)#5 miles = 8047 meters
+  fp<-burn_buf[burn_buf$Event_ID==i,]
+  fp_buf<-st_buffer(fp,0)
+  gacc_forburns<-st_intersection(fp_buf,gacc_buf)#5 miles = 8047 meters
   
 }
 print(Sys.time())

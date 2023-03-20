@@ -5,7 +5,7 @@ library(tidyverse)
 library(anytime)
 
 #read in PL data with no header
-pl<-read.csv("data\\raw_pl_data.csv",header=FALSE)
+pl<-read.csv("data\\raw_pl_data_2020.csv",header=FALSE)
 #correct first row,col
 pl[1,1]<-"January"
 
@@ -21,7 +21,7 @@ incidents<-read.csv("data\\oursample.csv")
 
 #in the PL data
 #create a vector for years
-years<-as.character(seq(1999,2018,1))
+years<-as.character(seq(1999,2020,1))
 #assign the column names
 colnames(pl)<-c("Month","Day",years)
 pl_good<-pl[-1,]
@@ -29,7 +29,7 @@ pl_good<-pl[-1,]
 #keep month and day, spread years throughout a column
 long_form<-reshape::melt(pl_good,id.vars=c("Month","Day"))
 #writing out the product of reshaping
-write.csv(long_form,"cleaned_pl_data.csv")
+write.csv(long_form,"cleaned_pl_data_2023.csv")
 
 #rename the PL columns
 colnames(long_form)<-c("Month","Date","Year","PL")
@@ -68,7 +68,8 @@ long_form_num_mnth$Y_M_D<-paste0(long_form_num_mnth$Year,long_form_num_mnth$Mont
 ##then tabulate the max pl within that window of dates and the # of days at 5,4,3,2,1
 
 #get only the columns from the incident df that we need to do the PL tabulations
-inc_withdates<-as.data.frame(cbind(incidents$INCIDENT_ID,incidents$DISCOVERY_DATE,incidents$FINAL_REPORT_DATE,incidents$START_YEAR))
+#inc_withdates<-as.data.frame(cbind(incidents$INCIDENT_ID,incidents$DISCOVERY_DATE,incidents$FINAL_REPORT_DATE,incidents$START_YEAR))
+inc_withdates<-as.data.frame(cbind(incidents$incident_id,incidents$discovery_date,incidents$final_report_date,incidents$start_year))
 
 #condense to single row per incident
 uni_inc_withdates<-unique(inc_withdates)
@@ -154,8 +155,8 @@ for (i in 1:nrow(uni_inc_withdates)){
   
 }
 
-colnames(incidents_withPLdays)<-c("INCIDENT_ID","PL","NumOfDays")
-colnames(incidents_withmaxPL)<-c("INCIDENT_ID","max_PL")
+colnames(incidents_withPLdays)<-c("incident_id","PL","NumOfDays")
+colnames(incidents_withmaxPL)<-c("incident_id","max_PL")
 
 
 #need to reshape these dataframes, starting with the PL days one
@@ -166,21 +167,21 @@ num_of_days<-rep(NA,times=length(pl_rep))
 
 
 df<-as.data.frame(cbind(inc_ids_rep,pl_rep,num_of_days))
-colnames(df)<-c("INCIDENT_ID","PL","NumOfDays")
+colnames(df)<-c("incident_id","PL","NumOfDays")
 
-test<-merge(df,incidents_withPLdays,by.x=c("INCIDENT_ID","PL"),by.y=c("INCIDENT_ID","PL"),all.x=TRUE)
+test<-merge(df,incidents_withPLdays,by.x=c("incident_id","PL"),by.y=c("incident_id","PL"),all.x=TRUE)
 
 
 test$NumOfDays.x<-NULL
 
 
-join_toinc_leveltable<-reshape(test, idvar = "INCIDENT_ID", timevar = "PL", direction = "wide")
+join_toinc_leveltable<-reshape(test, idvar = "incident_id", timevar = "PL", direction = "wide")
 
 
-colnames(join_toinc_leveltable)<-c("INCIDENT_ID","Days_PL1","Days_PL2","Days_PL3","Days_PL4","Days_PL5")
+colnames(join_toinc_leveltable)<-c("incident_id","Days_PL1","Days_PL2","Days_PL3","Days_PL4","Days_PL5")
 join_toinc_leveltable[is.na(join_toinc_leveltable)]<-0
 
-pl_stuff<-merge(join_toinc_leveltable,incidents_withmaxPL,by="INCIDENT_ID")
+pl_stuff<-merge(join_toinc_leveltable,incidents_withmaxPL,by="incident_id")
 
 write.csv(pl_stuff,"data\\pl_daysat_max.csv")
 #write.csv(incidents_withmaxPL,"pl_data_maxPL_0827.csv")
